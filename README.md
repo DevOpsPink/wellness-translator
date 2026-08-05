@@ -123,6 +123,29 @@ instant, for deciding whether two sleep segments overlap, and the wall clock
 date as written, which is the one a person means by "Tuesday" even if they
 were somewhere else that week.
 
+## Colour
+
+The palette is devops.pink's, taken the way that site builds it rather than by
+eyedropper: one hue — 340 — with everything else derived from it in OKLCH.
+`--hue` in `src/styles.css` is the single knob; move it and the whole interface
+follows, greys included, since they carry a trace of the brand rather than
+being neutral.
+
+The traffic light is the exception. A red that has drifted towards the pink
+beside it stops working as a warning, so the three statuses keep hues held well
+away from 340 and from each other. What makes them look like one family is the
+lightness they share — and that shared lightness is also what makes them
+legible, so the palette and the contrast floor are settled by the same
+decision. The fourth state has no colour of its own: a card with no verdict
+borrows the muted text colour, because it is not making a quiet judgement, it
+is making none.
+
+Every text pair was measured against its real background rather than eyeballed
+— all ten clear WCAG AA in both themes, the tightest being 4.69:1.
+
+Roboto is the site's face. It is used if the reader has it and skipped if not:
+a web font would mean a network request, and this app makes none.
+
 ## Layout
 
 ```

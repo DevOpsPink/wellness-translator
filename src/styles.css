@@ -1,29 +1,64 @@
-/* Colours live here and nowhere else, so a repaint never means touching logic. */
+/*
+ * Colours live here and nowhere else, so a repaint never means touching logic.
+ *
+ * The palette is devops.pink's, and taken the way that site builds it rather
+ * than by eyedropper: one hue, everything else derived from it in OKLCH.
+ * Change --hue and the whole interface moves with it, greys included — they
+ * carry a trace of the brand rather than being neutral.
+ */
 :root {
-  --bg: #f6f6f4;
-  --surface: #ffffff;
-  --border: #e3e2dd;
-  --text: #1d1d1b;
-  --text-muted: #6b6a66;
+  --hue: 340;
 
-  --good: #1f8a4c;
-  --watch: #b8860b;
-  --alert: #c0392b;
-  --collecting: #9a9a95;
+  --bg: oklch(0.95 0.01 var(--hue));
+  --surface: #ffffff;
+  --border: oklch(0.92 0.01 var(--hue));
+  --text: oklch(0.25 0.02 var(--hue));
+  --text-muted: oklch(0.4 0.02 var(--hue));
+
+  --primary: oklch(0.45 0.14 var(--hue));
+  --primary-soft: oklch(0.95 0.025 var(--hue));
+  --primary-soft-hover: oklch(0.9 0.05 var(--hue));
+
+  /*
+   * The traffic light is the one thing the brand does not get to own. Its job
+   * is to be read at a glance, and a red that has drifted towards the pink it
+   * sits beside stops being a warning. So the three keep their own hues, held
+   * well away from 340 and from each other.
+   *
+   * What makes them look like one family instead of three borrowed colours is
+   * the single lightness they share. It also happens to be what makes them
+   * legible: at L 0.54 every one of them clears 5:1 on a white card, so the
+   * palette and the contrast requirement are satisfied by the same decision
+   * rather than fighting each other.
+   *
+   * The fourth state is not a colour of its own. A card with no verdict is
+   * not making a quiet judgement, it is making none, so it borrows the muted
+   * text colour and reads as what it is: metadata.
+   */
+  --good: oklch(0.54 0.15 150);
+  --watch: oklch(0.54 0.13 80);
+  --alert: oklch(0.54 0.19 25);
+  --collecting: var(--text-muted);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #16161a;
-    --surface: #1f1f24;
-    --border: #32323a;
-    --text: #f2f2ef;
-    --text-muted: #a1a19c;
+    --bg: oklch(0.16 0.014 var(--hue));
+    --surface: oklch(0.23 0.015 var(--hue));
+    --border: oklch(0.29 0.014 var(--hue));
+    --text: oklch(0.85 0.01 var(--hue));
+    --text-muted: oklch(0.72 0.01 var(--hue));
 
-    --good: #4ec27f;
-    --watch: #e0b13c;
-    --alert: #ef6f61;
-    --collecting: #77777f;
+    --primary: oklch(0.75 0.14 var(--hue));
+    --primary-soft: oklch(0.33 0.035 var(--hue));
+    --primary-soft-hover: oklch(0.38 0.04 var(--hue));
+
+    /* Lifted for a dark background: same three hues, again one shared
+       lightness between them. */
+    --good: oklch(0.78 0.15 150);
+    --watch: oklch(0.78 0.13 80);
+    --alert: oklch(0.78 0.17 25);
+    --collecting: var(--text-muted);
   }
 }
 
@@ -33,10 +68,23 @@
 
 body {
   margin: 0;
+  min-height: 100vh;
   padding: 2rem 1.25rem 3rem;
-  background: var(--bg);
+  /* The brand's quiet wash: transparent at the top, deepening into the hue
+     towards the bottom. Fixed, so it stays put while the page scrolls, and
+     static by choice — no motion. */
+  background-color: var(--bg);
+  background-image: linear-gradient(
+    160deg,
+    transparent 0%,
+    color-mix(in oklch, transparent, var(--primary) 14%) 100%
+  );
+  background-attachment: fixed;
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui,
+  /* Roboto is the site's face. It is used if the reader happens to have it and
+     quietly skipped if not — a web font would mean a network request, and this
+     app makes none. */
+  font-family: Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui,
     sans-serif;
   line-height: 1.5;
 }
@@ -52,10 +100,13 @@ body {
   margin-bottom: 1.75rem;
 }
 
+/* The one place the brand colour is spent on text: a date carries no verdict,
+   so tinting it says "this is the app" without colouring a judgement. */
 .summary__date {
   margin: 0 0 0.25rem;
-  color: var(--text-muted);
+  color: var(--primary);
   font-size: 0.875rem;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -79,12 +130,24 @@ body {
   gap: 0.75rem;
 }
 
+/* Following the site's own card treatment: 1rem corners, and a shape defined
+   by a soft shadow on light backgrounds where a hard outline would be noise,
+   by a hairline in the dark where a shadow cannot be seen. */
 .card {
   position: relative;
   padding: 1.125rem 1.25rem 1.125rem 2.5rem;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px oklch(0.25 0.02 var(--hue) / 6%),
+    0 6px 16px oklch(0.25 0.02 var(--hue) / 4%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    border-color: var(--border);
+    box-shadow: none;
+  }
 }
 
 /* The traffic light itself. One rule per status keeps the mapping obvious. */
@@ -169,18 +232,22 @@ body {
   color: var(--text-muted);
 }
 
+/* The site's button: a soft wash of the brand hue rather than a solid block
+   of it, with the deeper shade kept for the label. */
 .import__button {
   display: inline-block;
   padding: 0.75rem 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 0;
   border-radius: 0.75rem;
   font-weight: 500;
+  transition: background-color 0.15s ease;
   cursor: pointer;
 }
 
 .import__button:hover {
-  border-color: var(--text-muted);
+  background: var(--primary-soft-hover);
 }
 
 /* The label is the button: clicking anywhere on it opens the file chooser,
@@ -201,6 +268,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Dashed underlines are the site's link signature. */
 .link {
   padding: 0;
   background: none;
@@ -208,7 +276,21 @@ body {
   color: inherit;
   font: inherit;
   text-decoration: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25rem;
+  transition: color 0.15s ease;
   cursor: pointer;
+}
+
+.link:hover {
+  color: var(--primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
 }
 
 /* --- Footer ------------------------------------------------------------ */

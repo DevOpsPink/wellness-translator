@@ -45,6 +45,13 @@ raise it rather than quietly working around it.
   framework without asking — "it would be easier with X" is not a reason here.
 - **Statuses are named by meaning, not colour**: `good`, `watch`, `alert`,
   `collecting`. Colour lives only in `styles.css`.
+- **The palette is devops.pink's, derived from one hue in OKLCH.** `--hue: 340`
+  in `styles.css` drives everything; use `oklch()` off it rather than adding
+  hex values. The three traffic-light hues are deliberately held away from the
+  brand and share one lightness — do not "harmonise" them towards pink, and do
+  not change their lightness without re-measuring contrast. Every text pair
+  currently clears WCAG AA in both themes; the tightest is 4.69:1, so there is
+  little headroom.
 - **All user-facing wording lives in `src/lib/metrics.js`** — the `phrases`
   field per metric, plus `summaryFor`. It is the one file to open to reword
   or translate the app.
