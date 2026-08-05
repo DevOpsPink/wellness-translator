@@ -64,9 +64,23 @@
         <p class="import__status" id="import-status" role="status" hidden></p>
       </section>
 
+      <section class="data" id="data" hidden>
+        <h2 class="data__title">What was actually recorded</h2>
+        <p class="data__lead">
+          Nothing here is a health finding. It is how complete the record is,
+          which decides how much the rest of the app can honestly say.
+        </p>
+        <table class="data__table" id="data-table"></table>
+        <p class="data__note" id="data-nights"></p>
+      </section>
+
       <footer class="footer" id="footer" hidden>
         <p id="footer-source"></p>
         <p>
+          <button type="button" class="link" id="show-data">
+            What was recorded
+          </button>
+          ·
           <button type="button" class="link" id="another-file">
             Use another file
           </button>

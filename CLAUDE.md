@@ -88,6 +88,13 @@ There is no test runner (no Node). Verify by driving the page: serve the
 folder, then exercise the logic in the browser console and check the render at
 desktop and 375px, in both light and dark.
 
+Two traps worth knowing. Toggling a view with the `hidden` attribute only
+works because of the `[hidden] { display: none !important }` rule near the top
+of `styles.css` — the browser's own rule is the same weight as any class here,
+so `.cards { display: grid }` beat it and the element stayed on screen. And
+the browser pane caches modules hard: if an edit does not appear, check
+whether the module is being served from cache before hunting for a bug in it.
+
 ```bash
 python3 -m http.server 8000
 ```

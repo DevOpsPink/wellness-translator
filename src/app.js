@@ -8,6 +8,7 @@ import {
   rollingBaseline,
   typicalDeviations,
 } from './lib/baseline.js';
+import { coverage, missingNights } from './lib/coverage.js';
 import { importAppleHealthExport } from './lib/health-import.js';
 import * as stored from './lib/stored-data.js';
 import {
@@ -16,6 +17,7 @@ import {
   compareToBaseline,
   driftSentence,
   formatDeviation,
+  missingNightsSentence,
   phraseFor,
   summaryFor,
   trendSentence,
@@ -202,13 +204,56 @@ function show(records, source, recordedUnits = {}) {
   el('footer-source').textContent = source;
   el('import').hidden = true;
   el('summary').hidden = false;
+  el('cards').hidden = false;
   el('footer').hidden = false;
+  closeDataView();
   render();
+}
+
+/** Put the coverage view away, wherever it was left. */
+function closeDataView() {
+  el('data').hidden = true;
+  el('show-data').textContent = 'What was recorded';
+}
+
+const asDate = (iso) =>
+  new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+/** The coverage table: how much of each metric was actually written down. */
+function renderData() {
+  const rows = coverage(days, METRICS)
+    .sort((a, b) => a.recentDays - b.recentDays)
+    .map(({ metric, recentDays, recentOf, totalDays, firstDate }) => {
+      const share = Math.round((recentDays / recentOf) * 100);
+      return `
+        <tr>
+          <th scope="row">${metric.label}</th>
+          <td class="data__count">${recentDays} of ${recentOf}</td>
+          <td class="data__bar">
+            <span style="width: ${share}%"></span>
+          </td>
+          <td class="data__total">${totalDays.toLocaleString()} days in all${
+            firstDate === null ? '' : `, since ${asDate(firstDate)}`
+          }</td>
+        </tr>`;
+    })
+    .join('');
+
+  el('data-table').innerHTML = `
+    <caption>Days with a reading, out of the last 90</caption>
+    ${rows}`;
+  el('data-nights').textContent = missingNightsSentence(missingNights(days));
 }
 
 function showImport() {
   el('summary').hidden = true;
   el('footer').hidden = true;
+  closeDataView();
+  el('cards').hidden = false;
   el('cards').replaceChildren();
   el('import').hidden = false;
   el('import-status').hidden = true;
@@ -249,6 +294,15 @@ el('file-input').addEventListener('change', (event) => {
 
 el('use-sample').addEventListener('click', () => {
   show(sampleData, 'Sample data, not yours.');
+});
+
+el('show-data').addEventListener('click', () => {
+  const showing = el('data').hidden;
+  if (showing) renderData();
+  el('data').hidden = !showing;
+  el('summary').hidden = showing;
+  el('cards').hidden = showing;
+  el('show-data').textContent = showing ? 'Back to the day' : 'What was recorded';
 });
 
 el('another-file').addEventListener('click', showImport);

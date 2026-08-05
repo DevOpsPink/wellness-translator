@@ -177,6 +177,25 @@ the signal is not the signal.
 The window is local clock time, which suits someone who sleeps at night and
 would misjudge someone who works nights.
 
+### What was actually recorded
+
+A second screen, reachable from the footer, shows how complete the record is:
+days with a reading out of the last ninety, per metric, and how far each one
+goes back.
+
+It exists because the most useful thing this app found in a real export was
+not about health at all. Sleep is recorded on 55 of the last ninety nights.
+Of the 35 blank ones the watch was off for 25 and on for part of
+the night for 9 — and across the whole history, one night had the
+watch on all night and still recorded nothing, which is a settings problem
+rather than a habit. None of that is visible in Apple Health, or in any of the
+apps built on top of it, and all of it is actionable in a way a heart rate
+reading is not.
+
+Only sleep gets its blanks explained. The evidence is the overnight heart
+rate, which says whether the watch was on a wrist and says nothing whatever
+about a daytime figure.
+
 ### Remembering an import
 
 The parsed days — one row each, a few hundred kilobytes — are kept in
@@ -237,6 +256,7 @@ index.html                     the single screen
 src/app.js                     pulls it together, renders the cards
 src/styles.css                 all colours, including the traffic light
 src/lib/health-import.js       streams export.xml into daily records
+src/lib/coverage.js            how complete the record is
 src/lib/stored-data.js         keeps the import in localStorage
 src/lib/baseline.js            the 7-day rolling average
 src/lib/metrics.js             metric definitions, thresholds, wording
@@ -258,6 +278,7 @@ Small pieces, one working before the next starts:
 9. **Replace the chart with something that needs no decoding** ✅ done
 10. **Calibrate the thresholds to each metric's own variability** ✅ done
 11. **Read runs of days, and this week against this season** ✅ done
+12. **A screen for how complete the record actually is** ✅ done
 
 Everything in the original spec now works on real data.
 

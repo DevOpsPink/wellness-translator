@@ -372,6 +372,34 @@ export function driftSentence(drift) {
   } your last three months.`;
 }
 
+/**
+ * The blank nights, accounted for.
+ *
+ * The three causes call for three different responses — wear the watch, wear
+ * it all night, or go and look at the sleep settings — so they are counted
+ * separately rather than added up into "no data".
+ */
+export function missingNightsSentence({ total, off, partly, worn }) {
+  if (total === 0) return 'Every recent night has a sleep figure.';
+
+  const parts = [];
+  if (off > 0) parts.push(`the watch was off for ${off}`);
+  if (partly > 0) parts.push(`on for part of the night for ${partly}`);
+  if (worn > 0) parts.push(`on all night for ${worn}`);
+  if (parts.length === 0) return `${total} recent nights have no sleep figure.`;
+
+  const settings =
+    worn > 0
+      ? ` The last ${
+          worn === 1 ? 'one is' : 'ones are'
+        } a settings problem rather than a habit — the watch was there and recorded nothing.`
+      : '';
+
+  return `Of the ${total} recent nights with no sleep recorded, ${joinList(
+    parts,
+  )}.${settings}`;
+}
+
 /** "sleep and HRV", "sleep, HRV and resting heart rate". */
 function joinList(items) {
   if (items.length <= 1) return items.join('');

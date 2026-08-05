@@ -66,6 +66,13 @@
   box-sizing: border-box;
 }
 
+/* The browser hides [hidden] with `display: none`, but that is an ordinary
+   rule of the same weight as any class here — so `.cards { display: grid }`
+   further down quietly wins and the element stays on screen. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -385,6 +392,84 @@ body {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
   border-radius: 0.25rem;
+}
+
+/* --- What was recorded -------------------------------------------------- */
+
+.data__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.data__lead {
+  margin: 0 0 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+.data__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.data__table caption {
+  padding-bottom: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  text-align: left;
+}
+
+.data__table th,
+.data__table td {
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-top: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.data__table th {
+  font-weight: 500;
+}
+
+.data__count {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A bar rather than a second number: the point of this table is which rows
+   are short, and that is a length, not a figure to be read. */
+.data__bar {
+  width: 30%;
+  min-width: 4rem;
+}
+
+.data__bar span {
+  display: block;
+  height: 0.5rem;
+  min-width: 2px;
+  background: var(--primary);
+  border-radius: 1px;
+}
+
+.data__total {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.data__note {
+  margin: 1.5rem 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 34rem) {
+  .data__total {
+    display: none;
+  }
 }
 
 /* --- Footer ------------------------------------------------------------ */
