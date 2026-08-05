@@ -26,6 +26,19 @@ export const STATUS = {
  * `worseWhen` records which direction is the bad one. Resting heart rate
  * going up is bad; HRV and sleep going down is bad. The comparison logic
  * reads this instead of hard-coding a rule per metric.
+ *
+ * `phrases` is the translation the whole app exists for: 59 bpm means nothing
+ * to most people, "your heart is working a little harder at rest than usual"
+ * means something. Three rules hold for every line written here:
+ *
+ *   1. Describe, never diagnose or prescribe. "Your recovery signal is well
+ *      below your usual" — yes. "You are coming down with something", "take
+ *      it easy today" — no. The app can see a number move; it cannot see why,
+ *      and it is not a doctor.
+ *   2. Say it plainly and once. No exclamation marks, no cheerleading, no
+ *      nudge to come back tomorrow.
+ *   3. Always "than usual", never "than normal". The comparison is against
+ *      this person last week, not against anybody else.
  */
 export const METRICS = [
   {
@@ -34,6 +47,13 @@ export const METRICS = [
     unit: 'bpm',
     worseWhen: 'higher',
     format: (value) => Math.round(value).toString(),
+    phrases: {
+      [STATUS.GOOD]: 'Your heart is ticking over at its usual rate.',
+      [STATUS.WATCH]:
+        'Your heart is working a little harder at rest than it usually does.',
+      [STATUS.ALERT]:
+        'Your heart is working noticeably harder at rest than it usually does.',
+    },
   },
   {
     id: 'hrv',
@@ -41,6 +61,11 @@ export const METRICS = [
     unit: 'ms',
     worseWhen: 'lower',
     format: (value) => Math.round(value).toString(),
+    phrases: {
+      [STATUS.GOOD]: 'Your recovery signal is where it usually sits.',
+      [STATUS.WATCH]: 'Your recovery signal is a little below your usual.',
+      [STATUS.ALERT]: 'Your recovery signal is well below your usual.',
+    },
   },
   {
     id: 'sleepHours',
@@ -48,6 +73,11 @@ export const METRICS = [
     unit: 'h',
     worseWhen: 'lower',
     format: (value) => value.toFixed(1),
+    phrases: {
+      [STATUS.GOOD]: 'You slept about as long as you usually do.',
+      [STATUS.WATCH]: 'You slept a little less than you usually do.',
+      [STATUS.ALERT]: 'You slept a lot less than you usually do.',
+    },
   },
 ];
 
@@ -106,25 +136,16 @@ export function compareToBaseline(metric, value, baseline) {
 }
 
 /**
- * Placeholder verdicts, one per status.
+ * The sentence on a card.
  *
- * Step 3 of the plan replaces these with real per-metric phrasing
- * ("your heart is working harder than usual today"). For now they exist so
- * a card is readable while the machinery underneath gets built.
+ * While the baseline is still being built there is nothing to translate, so
+ * the card says what it is waiting for instead of guessing.
  */
-export const STATUS_LABEL = {
-  [STATUS.GOOD]: 'In your usual range',
-  [STATUS.WATCH]: 'A little off your usual',
-  [STATUS.ALERT]: 'Well off your usual',
-  [STATUS.COLLECTING]: 'Collecting data',
-};
-
-/** The status line on a card. Says how far off the baseline still is. */
-export function statusText(status, { days = 0 } = {}) {
+export function phraseFor(metric, status, { days = 0 } = {}) {
   if (status === STATUS.COLLECTING) {
     return `Collecting data — ${days} of ${MIN_DAYS_FOR_BASELINE} days`;
   }
-  return STATUS_LABEL[status];
+  return metric.phrases[status];
 }
 
 /** e.g. 0.064 -> "+6%". Rounded, because false precision invites reading in. */

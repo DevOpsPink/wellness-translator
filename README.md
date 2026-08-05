@@ -39,6 +39,10 @@ How the baseline is worked out:
 - No cloud storage — everything stays in the browser
 - All local
 - No engagement mechanics, no streaks, no notifications
+- **Describe, never diagnose or prescribe.** The app can see that a number
+  moved. It cannot see why, and it is not a doctor. Every phrase says what
+  changed against your own last week — none of them says what it means for
+  your health or what to do about it.
 
 ## Running it
 
@@ -72,9 +76,12 @@ Small pieces, one working before the next starts:
 
 1. **Project structure and three cards with mock data** ✅ done
 2. **Baseline, thresholds and the "collecting data" state** ✅ done
-3. Plain-language phrasing per metric
+3. **Plain-language phrasing per metric** ✅ done
 4. The summary line for the day
 5. Import a real Apple Health export instead of the mock
+
+All wording lives in the `phrases` field of each metric in `src/lib/metrics.js`
+— that is the one file to open to reword the app or translate it.
 
 Steps 2 and 3 of the original plan landed together: a rolling average that
 nothing compares against is dead code, so the baseline and the thresholds that

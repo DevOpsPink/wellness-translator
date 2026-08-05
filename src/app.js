@@ -9,7 +9,7 @@ import {
   STATUS,
   compareToBaseline,
   formatDeviation,
-  statusText,
+  phraseFor,
 } from './lib/metrics.js';
 
 /**
@@ -53,7 +53,7 @@ function createCard({ metric, value, baseline, days, status, deviation }) {
       ${metric.format(value)}<span class="card__unit">${metric.unit}</span>
     </p>
     ${comparison}
-    <p class="card__status">${statusText(status, { days })}</p>
+    <p class="card__status">${phraseFor(metric, status, { days })}</p>
   `;
 
   return card;
