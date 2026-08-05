@@ -6,10 +6,10 @@ import { dailyHealthData } from './data/mock-health-data.js';
 import { rollingBaseline } from './lib/baseline.js';
 import {
   METRICS,
-  STATUS,
   compareToBaseline,
   formatDeviation,
   phraseFor,
+  summaryFor,
 } from './lib/metrics.js';
 
 /**
@@ -75,16 +75,12 @@ function render() {
 
   const readings = METRICS.map((metric) => readMetric(records, metric));
 
+  document.getElementById('summary-verdict').textContent =
+    summaryFor(readings);
+
   const container = document.getElementById('cards');
   for (const reading of readings) {
     container.append(createCard(reading));
-  }
-
-  // Step 4 turns the three statuses into one sentence for the day. Until
-  // then, at least stop promising a verdict the app cannot give yet.
-  if (readings.every((reading) => reading.status === STATUS.COLLECTING)) {
-    document.getElementById('summary-verdict').textContent =
-      'Still learning your normal';
   }
 }
 

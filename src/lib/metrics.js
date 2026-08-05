@@ -44,6 +44,8 @@ export const METRICS = [
   {
     id: 'restingHeartRate',
     label: 'Resting Heart Rate',
+    // Lower case, because it only ever appears inside the summary sentence.
+    shortLabel: 'resting heart rate',
     unit: 'bpm',
     worseWhen: 'higher',
     format: (value) => Math.round(value).toString(),
@@ -58,6 +60,7 @@ export const METRICS = [
   {
     id: 'hrv',
     label: 'HRV',
+    shortLabel: 'HRV',
     unit: 'ms',
     worseWhen: 'lower',
     format: (value) => Math.round(value).toString(),
@@ -70,6 +73,7 @@ export const METRICS = [
   {
     id: 'sleepHours',
     label: 'Sleep',
+    shortLabel: 'sleep',
     unit: 'h',
     worseWhen: 'lower',
     format: (value) => value.toFixed(1),
@@ -146,6 +150,83 @@ export function phraseFor(metric, status, { days = 0 } = {}) {
     return `Collecting data — ${days} of ${MIN_DAYS_FOR_BASELINE} days`;
   }
   return metric.phrases[status];
+}
+
+/** "sleep and HRV", "sleep, HRV and resting heart rate". */
+function joinList(items) {
+  if (items.length <= 1) return items.join('');
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
+function capitalise(sentence) {
+  return sentence.charAt(0).toUpperCase() + sentence.slice(1);
+}
+
+/**
+ * The one line above the cards.
+ *
+ * Deliberately *not* a score. Averaging three metrics into a single number
+ * would invent a precision none of them has, and would hide the one thing
+ * worth knowing — which of them moved. So the line names the worst group and
+ * says whether it stands alone; the cards below carry the detail.
+ *
+ * It also names metrics, never the person. "Sleep is well off your usual" is
+ * an observation about a number. "You are having a rough day" is a verdict on
+ * someone's life, from an app that has seen three figures.
+ *
+ * @param readings the per-metric objects built in app.js, each carrying its
+ *   `metric` and its `status`
+ */
+export function summaryFor(readings) {
+  const graded = readings.filter(({ status }) => status !== STATUS.COLLECTING);
+  if (graded.length === 0) return 'Still learning your normal';
+
+  const labelsWith = (wanted) =>
+    graded
+      .filter(({ status }) => status === wanted)
+      .map(({ metric }) => metric.shortLabel);
+
+  const alert = labelsWith(STATUS.ALERT);
+  const watch = labelsWith(STATUS.WATCH);
+
+  const stillCollecting = readings
+    .filter(({ status }) => status === STATUS.COLLECTING)
+    .map(({ metric }) => metric.shortLabel);
+
+  if (alert.length === 0 && watch.length === 0) {
+    // "Everything" is a claim about all three metrics, so it may only be made
+    // once all three have been judged. The sentences further down name the
+    // metrics they are about and so claim nothing about the others; this one
+    // covers the lot, which is why it alone needs the qualifier.
+    return stillCollecting.length === 0
+      ? 'Everything is where it usually is'
+      : `Nothing unusual so far — still learning your ${joinList(stillCollecting)}`;
+  }
+
+  const clauses = [];
+  if (alert.length > 0) {
+    clauses.push(
+      `${joinList(alert)} ${alert.length === 1 ? 'is' : 'are'} well off your usual`,
+    );
+  }
+  if (watch.length > 0) {
+    clauses.push(
+      `${joinList(watch)} ${watch.length === 1 ? 'is' : 'are'} a little off`,
+    );
+  }
+
+  let sentence = capitalise(clauses.join(', and '));
+
+  // Only claim the rest is fine when the rest really is all green. With a
+  // metric still collecting, there is something the app cannot vouch for.
+  const everythingElseIsGood =
+    graded.length === readings.length &&
+    graded.length > alert.length + watch.length;
+  if (everythingElseIsGood) {
+    sentence += ' — the rest looks typical';
+  }
+
+  return sentence;
 }
 
 /** e.g. 0.064 -> "+6%". Rounded, because false precision invites reading in. */

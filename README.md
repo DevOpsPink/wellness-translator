@@ -77,8 +77,13 @@ Small pieces, one working before the next starts:
 1. **Project structure and three cards with mock data** ✅ done
 2. **Baseline, thresholds and the "collecting data" state** ✅ done
 3. **Plain-language phrasing per metric** ✅ done
-4. The summary line for the day
+4. **The summary line for the day** ✅ done
 5. Import a real Apple Health export instead of the mock
+
+The summary line is deliberately not a score. Averaging three metrics into one
+number would invent a precision none of them has and hide the only thing worth
+knowing — which one moved. It names the worst group and says whether it stands
+alone.
 
 All wording lives in the `phrases` field of each metric in `src/lib/metrics.js`
 — that is the one file to open to reword the app or translate it.

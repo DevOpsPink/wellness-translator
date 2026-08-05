@@ -60,11 +60,16 @@ body {
   letter-spacing: 0.06em;
 }
 
+/* Long enough to wrap on a phone, so it is sized to be read as a sentence
+   rather than shouted as a headline. `balance` keeps a two-line verdict from
+   leaving one word stranded on the second line. */
 .summary__verdict {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
+  line-height: 1.35;
   letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 
 /* --- Cards ------------------------------------------------------------- */
