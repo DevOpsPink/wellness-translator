@@ -71,8 +71,9 @@ desktop and 375px, in both light and dark.
 python3 -m http.server 8000
 ```
 
-`?days=N` truncates the history — that is how to reach the "collecting data"
-state without editing the mock.
+Arrow keys walk back through the imported history, which is how to reach any
+state the app can be in — including the early days with too little history to
+judge. (This replaced an earlier `?days=N` URL parameter.)
 
 The threshold boundaries are the part that has already broken once: an exact
 5% deviation came out of floating-point division as 0.05000000000000002 and

@@ -9,7 +9,28 @@
   <body>
     <main class="app">
       <header class="summary" id="summary" hidden>
-        <p class="summary__date" id="summary-date"></p>
+        <div class="summary__nav">
+          <button
+            type="button"
+            class="daybtn"
+            id="day-back"
+            aria-label="Previous day"
+          >
+            ‹
+          </button>
+          <p class="summary__date" id="summary-date"></p>
+          <button
+            type="button"
+            class="daybtn"
+            id="day-forward"
+            aria-label="Next day"
+          >
+            ›
+          </button>
+          <button type="button" class="link" id="day-latest" hidden>
+            Latest
+          </button>
+        </div>
         <h1 class="summary__verdict" id="summary-verdict"></h1>
       </header>
 

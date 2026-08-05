@@ -23,7 +23,13 @@ Traffic light, per metric:
 - 🔴 **Red** — more than 10% worse than baseline
 - ⚪️ **Collecting data** — fewer than 4 days of history, so no verdict is given
 
-One screen: a summary line for the day on top, three cards below.
+One screen: a summary line for the day on top, three cards below, each showing
+the last 30 days behind its number. A single reading says almost nothing on its
+own — "34 ms" reads one way if last month was 33, quite another if it was 45
+and sliding. The dashed line across each sparkline is the personal baseline, so
+above and below are visible without doing the arithmetic.
+
+Any day in the history can be brought up with the arrow keys.
 
 How the baseline is worked out:
 
@@ -56,9 +62,9 @@ python3 -m http.server 8000
 Then open <http://localhost:8000> and either pick an `export.xml` or click
 through to the sample data.
 
-Add `?days=3` to the URL to pretend only the first three days were ever
-recorded — that is how to look at the "collecting data" state without editing
-the mock.
+Arrow keys, or the chevrons beside the date, walk back through the history.
+Every state the app can be in is reachable that way, including the early days
+when there was not yet enough history to judge anything.
 
 ## Reading an Apple Health export
 
@@ -154,6 +160,7 @@ src/app.js                     pulls it together, renders the cards
 src/styles.css                 all colours, including the traffic light
 src/lib/health-import.js       streams export.xml into daily records
 src/lib/stored-data.js         keeps the import in localStorage
+src/lib/sparkline.js           the 30-day line under each number
 src/lib/baseline.js            the 7-day rolling average
 src/lib/metrics.js             metric definitions, thresholds, wording
 src/data/mock-health-data.js   10 days of stand-in data, for the sample view
@@ -169,6 +176,7 @@ Small pieces, one working before the next starts:
 4. **The summary line for the day** ✅ done
 5. **Import a real Apple Health export instead of the mock** ✅ done
 6. **Remember the import, and explain blank nights** ✅ done
+7. **Show the month behind each number, and walk the history** ✅ done
 
 Everything in the original spec now works on real data.
 

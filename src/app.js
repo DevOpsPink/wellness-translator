@@ -1,10 +1,11 @@
 /**
- * Entry point: get some daily data from somewhere, work out where the latest
+ * Entry point: get some daily data from somewhere, work out where the chosen
  * day sits against its baseline, then put three cards on the page.
  */
 import { dailyHealthData as sampleData } from './data/mock-health-data.js';
 import { rollingBaseline } from './lib/baseline.js';
 import { importAppleHealthExport } from './lib/health-import.js';
+import { SPARKLINE_DAYS, sparkline } from './lib/sparkline.js';
 import * as stored from './lib/stored-data.js';
 import {
   METRICS,
@@ -16,22 +17,15 @@ import {
 
 const el = (id) => document.getElementById(id);
 
-/**
- * Dev aid: `?days=3` pretends only the first three days were ever recorded.
- * It is how you look at the "collecting data" state without editing the mock.
- */
-function historyToShow(records) {
-  const requested = Number(new URLSearchParams(location.search).get('days'));
-  return Number.isInteger(requested) && requested > 0
-    ? records.slice(0, requested)
-    : records;
-}
+/** What is on screen: the loaded days, and which one is being looked at. */
+let days = [];
+let selected = 0;
 
 /** Everything one card needs to know, worked out in one place. */
-function readMetric(records, metric) {
-  const today = records[records.length - 1];
-  const value = today[metric.id];
-  const { average, days } = rollingBaseline(records, metric.id);
+function readMetric(records, index, metric) {
+  const day = records[index];
+  const value = day[metric.id];
+  const { average, days: history } = rollingBaseline(records, metric.id, index);
   const { status, deviation, worse, reason } = compareToBaseline(
     metric,
     value,
@@ -42,17 +36,20 @@ function readMetric(records, metric) {
     metric,
     value,
     baseline: average,
-    days,
+    days: history,
     status,
     deviation,
     worse,
     reason,
-    wristOvernight: today.wristOvernight ?? null,
+    wristOvernight: day.wristOvernight ?? null,
+    recent: records
+      .slice(Math.max(0, index - SPARKLINE_DAYS + 1), index + 1)
+      .map((record) => record[metric.id]),
   };
 }
 
 function createCard(reading) {
-  const { metric, value, baseline, deviation, status } = reading;
+  const { metric, value, baseline, deviation, status, recent } = reading;
 
   const card = document.createElement('article');
   card.className = `card card--${status}`;
@@ -77,33 +74,52 @@ function createCard(reading) {
     </p>
     ${comparison}
     <p class="card__status">${phraseFor(metric, status, reading)}</p>
+    ${sparkline(recent, baseline)}
   `;
 
   return card;
 }
 
-function show(records, source) {
-  const history = historyToShow(records);
-  const today = history[history.length - 1];
+function render() {
+  const day = days[selected];
 
   // The date the numbers describe — not "now". They are not the same thing
   // once we are reading a file that was exported days ago.
   el('summary-date').textContent = new Date(
-    `${today.date}T00:00:00`,
+    `${day.date}T00:00:00`,
   ).toLocaleDateString(undefined, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
+    year: 'numeric',
   });
 
-  const readings = METRICS.map((metric) => readMetric(history, metric));
+  const readings = METRICS.map((metric) => readMetric(days, selected, metric));
   el('summary-verdict').textContent = summaryFor(readings);
   el('cards').replaceChildren(...readings.map(createCard));
+
+  el('day-back').disabled = selected === 0;
+  el('day-forward').disabled = selected === days.length - 1;
+  el('day-latest').hidden = selected === days.length - 1;
+}
+
+/** Move through the history, stopping at either end. */
+function goTo(index) {
+  const clamped = Math.min(Math.max(index, 0), days.length - 1);
+  if (clamped === selected) return;
+  selected = clamped;
+  render();
+}
+
+function show(records, source) {
+  days = records;
+  selected = records.length - 1;
 
   el('footer-source').textContent = source;
   el('import').hidden = true;
   el('summary').hidden = false;
   el('footer').hidden = false;
+  render();
 }
 
 function showImport() {
@@ -157,6 +173,25 @@ el('another-file').addEventListener('click', showImport);
 el('forget').addEventListener('click', () => {
   stored.forget();
   showImport();
+});
+
+el('day-back').addEventListener('click', () => goTo(selected - 1));
+el('day-forward').addEventListener('click', () => goTo(selected + 1));
+el('day-latest').addEventListener('click', () => goTo(days.length - 1));
+
+// Arrow keys, because anyone reading a run of days will reach for them.
+document.addEventListener('keydown', (event) => {
+  if (el('summary').hidden) return;
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+  if (event.key === 'ArrowLeft') {
+    goTo(selected - 1);
+  } else if (event.key === 'ArrowRight') {
+    goTo(selected + 1);
+  } else {
+    return;
+  }
+  event.preventDefault();
 });
 
 const remembered = stored.load();
