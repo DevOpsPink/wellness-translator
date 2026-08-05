@@ -249,6 +249,35 @@ export function phraseFor(
   return metric.phrases[status];
 }
 
+/** How many days the strip of daily verdicts covers. */
+export const TREND_DAYS = 30;
+
+/**
+ * The month in a sentence.
+ *
+ * This replaced a line chart. The chart scaled itself to whatever range the
+ * days happened to cover, so a heart rate wandering between 68 and 72 drew
+ * exactly the same dramatic peaks as one swinging from 50 to 90 — a picture
+ * whose most eye-catching feature carried no information at all. Counting the
+ * days that were actually off cannot be misread that way, and it answers the
+ * question the shape was only gesturing at.
+ */
+export function trendSentence(statuses) {
+  const judged = statuses.filter((status) => status !== STATUS.COLLECTING);
+  // Under a week of verdicts, "off on 2 of 3 days" reads as a trend when it
+  // is barely more than the day already on screen.
+  if (judged.length < 7) return '';
+
+  const off = judged.filter(
+    (status) => status === STATUS.WATCH || status === STATUS.ALERT,
+  ).length;
+
+  if (off === 0) {
+    return `In your usual range on all of the last ${judged.length} recorded days.`;
+  }
+  return `Off your usual on ${off} of the last ${judged.length} recorded days.`;
+}
+
 /** "sleep and HRV", "sleep, HRV and resting heart rate". */
 function joinList(items) {
   if (items.length <= 1) return items.join('');

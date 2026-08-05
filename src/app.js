@@ -5,14 +5,15 @@
 import { dailyHealthData as sampleData } from './data/mock-health-data.js';
 import { rollingBaseline } from './lib/baseline.js';
 import { importAppleHealthExport } from './lib/health-import.js';
-import { SPARKLINE_DAYS, sparkline } from './lib/sparkline.js';
 import * as stored from './lib/stored-data.js';
 import {
   METRICS,
+  TREND_DAYS,
   compareToBaseline,
   formatDeviation,
   phraseFor,
   summaryFor,
+  trendSentence,
 } from './lib/metrics.js';
 
 const el = (id) => document.getElementById(id);
@@ -46,10 +47,28 @@ function readMetric(records, index, metric) {
     worse,
     reason,
     wristOvernight: day.wristOvernight ?? null,
-    recent: records
-      .slice(Math.max(0, index - SPARKLINE_DAYS + 1), index + 1)
-      .map((record) => record[metric.id]),
+    recent: recentVerdicts(records, index, metric),
   };
+}
+
+/**
+ * The last month judged one day at a time.
+ *
+ * Each day is scored against the baseline it had at the time, not against
+ * today's — otherwise a quiet week now would repaint a bad one in March.
+ */
+function recentVerdicts(records, index, metric) {
+  const from = Math.max(0, index - TREND_DAYS + 1);
+  const verdicts = [];
+
+  for (let at = from; at <= index; at += 1) {
+    const { average } = rollingBaseline(records, metric.id, at);
+    verdicts.push(
+      compareToBaseline(metric, records[at][metric.id], average).status,
+    );
+  }
+
+  return verdicts;
 }
 
 function createCard(reading) {
@@ -78,7 +97,10 @@ function createCard(reading) {
     </p>
     ${comparison}
     <p class="card__status">${phraseFor(metric, status, reading)}</p>
-    ${sparkline(recent, baseline)}
+    <div class="trend" aria-hidden="true">${recent
+      .map((day) => `<span class="trend__day trend__day--${day}"></span>`)
+      .join('')}</div>
+    <p class="trend__note">${trendSentence(recent)}</p>
   `;
 
   return card;

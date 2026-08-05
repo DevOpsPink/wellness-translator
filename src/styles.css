@@ -251,70 +251,52 @@ body {
   font-size: 0.9375rem;
 }
 
-/* --- Sparkline ---------------------------------------------------------- */
+/* --- The last 30 days --------------------------------------------------- */
 
-/* Sized in CSS rather than the SVG so the line stretches with the card. The
-   viewBox is not preserved, which would distort a picture but is harmless for
-   a shape whose only job is to show a direction. */
-.spark {
-  display: block;
-  width: 100%;
-  height: 2.125rem;
-  margin-top: 0.75rem;
-  overflow: visible;
+/* One mark per day, coloured the way that day's card would have been. There
+   is nothing to decode: the red days can be counted. */
+.trend {
+  display: flex;
+  gap: 2px;
+  margin-top: 0.875rem;
 }
 
-.spark polyline {
-  fill: none;
-  stroke: var(--collecting);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  /* The line is drawn in a stretched coordinate system, so without this its
-     thickness would stretch with it and come out thinner than asked for. */
-  vector-effect: non-scaling-stroke;
+.trend__day {
+  flex: 1;
+  height: 0.75rem;
+  border-radius: 1px;
+  background: var(--text-muted);
+  opacity: 0.18;
 }
 
-.card--good .spark polyline {
-  stroke: var(--good);
+.trend__day--good {
+  background: var(--good);
+  opacity: 0.85;
 }
-.card--watch .spark polyline {
-  stroke: var(--watch);
+.trend__day--watch {
+  background: var(--watch);
+  opacity: 0.9;
 }
-.card--alert .spark polyline {
-  stroke: var(--alert);
-}
-
-/* The personal average, drawn so "above" and "below" become visible at a
-   glance rather than having to be worked out from the percentage. */
-.spark__baseline {
-  stroke: var(--text-muted);
-  stroke-width: 1;
-  stroke-dasharray: 3 3;
-  opacity: 0.45;
-  vector-effect: non-scaling-stroke;
+.trend__day--alert {
+  background: var(--alert);
+  opacity: 0.9;
 }
 
-.spark__today,
-.spark__orphan {
-  fill: currentColor;
+/* Today sits at the right-hand end, marked by height rather than colour so
+   it stays legible whatever verdict it carries. */
+.trend__day:last-child {
+  height: 1.125rem;
+  margin-top: -0.1875rem;
 }
 
-.card--good .spark__today,
-.card--good .spark__orphan {
-  fill: var(--good);
+.trend__note {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
 }
-.card--watch .spark__today,
-.card--watch .spark__orphan {
-  fill: var(--watch);
-}
-.card--alert .spark__today,
-.card--alert .spark__orphan {
-  fill: var(--alert);
-}
-.card--collecting .spark__today,
-.card--collecting .spark__orphan {
-  fill: var(--collecting);
+
+.trend__note:empty {
+  display: none;
 }
 
 .card--good .card__status {

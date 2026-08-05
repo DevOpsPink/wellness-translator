@@ -30,11 +30,19 @@ Traffic light, per metric:
 - 🔴 **Red** — more than 10% worse than baseline
 - ⚪️ **Collecting data** — fewer than 4 days of history, so no verdict is given
 
-One screen: a summary line for the day on top, six cards below, each showing
-the last 30 days behind its number. A single reading says almost nothing on its
-own — "34 ms" reads one way if last month was 33, quite another if it was 45
-and sliding. The dashed line across each sparkline is the personal baseline, so
-above and below are visible without doing the arithmetic.
+One screen: a summary line for the day on top, six cards below. A single
+reading says almost nothing on its own, so each card also carries the last 30
+days as one mark per day, coloured the way that day's card would have been,
+and a sentence counting them: *off your usual on 14 of the last 30 recorded
+days*.
+
+That started life as a line chart and was thrown away. The chart scaled itself
+to whatever range the days happened to cover, so a heart rate wandering between
+68 and 72 drew the same dramatic peaks as one swinging from 50 to 90 — its most
+eye-catching feature carried no information. It was also the wrong instrument
+for an app whose whole premise is turning numbers into words: it handed back a
+shape to decode. Marks you can count cannot be misread, and the sentence
+answers what the shape was only gesturing at.
 
 Any day in the history can be brought up with the arrow keys.
 
@@ -186,7 +194,6 @@ src/app.js                     pulls it together, renders the cards
 src/styles.css                 all colours, including the traffic light
 src/lib/health-import.js       streams export.xml into daily records
 src/lib/stored-data.js         keeps the import in localStorage
-src/lib/sparkline.js           the 30-day line under each number
 src/lib/baseline.js            the 7-day rolling average
 src/lib/metrics.js             metric definitions, thresholds, wording
 src/data/mock-health-data.js   10 days of stand-in data, for the sample view
@@ -204,6 +211,7 @@ Small pieces, one working before the next starts:
 6. **Remember the import, and explain blank nights** ✅ done
 7. **Show the month behind each number, and walk the history** ✅ done
 8. **Three more metrics, chosen from what the export actually holds** ✅ done
+9. **Replace the chart with something that needs no decoding** ✅ done
 
 Everything in the original spec now works on real data.
 

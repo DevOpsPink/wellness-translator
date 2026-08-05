@@ -60,6 +60,11 @@ raise it rather than quietly working around it.
   averaged; the logic reads them. Resist adding an `if` per metric. Adding a
   metric should mean one entry in `WANTED`, one in `METRICS`, and nothing
   else — if a third file needs teaching about it, that file is too specific.
+- **No charts that need decoding.** A line chart lived here briefly and was
+  removed: it auto-scaled, so a flat week and a wild one drew the same
+  dramatic shape, and it handed back a picture to interpret in an app whose
+  premise is turning numbers into words. Anything visual added here has to be
+  countable or nameable at a glance.
 - **Never state a cause you cannot evidence.** Sleep can say the watch was off
   because the overnight heart rate proves it. Daylight deliberately says
   nothing about why it is missing, because the wrist signal is about the night
