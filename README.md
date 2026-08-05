@@ -56,6 +56,24 @@ The median is used rather than the mean so that a fortnight of illness does not
 raise the bar for noticing the next one. The 5% figure survives as the fallback
 for a metric with too little history to know its own spread.
 
+### Two timescales, because one cannot see everything
+
+The daily verdict is blind to a slow slide, and not by oversight. The baseline
+is a seven-day average, so a metric that drops and stays down is back inside
+its own normal within about four days — it chases the change and swallows it.
+Measured over this export, runs of three consecutive off days happen **seven
+times across years of real data** and never once reach four.
+
+So the card carries a second, slower comparison: this week's average against
+the last three months'. It answers a different question — not "is today
+unusual" but "has your usual moved" — and it finds what the daily view cannot.
+Sleep has run 22% below its season; HRV, 26% below.
+
+The same rule applies as everywhere else: the gap is only mentioned when it is
+large for *that* metric, measured against how far a week normally drifts from
+its season. An ordinary week sits 2.6% from the season for walking heart rate
+and 16% for daylight.
+
 One screen: a summary line for the day on top, six cards below. A single
 reading says almost nothing on its own, so each card also carries the last 30
 days as one mark per day, coloured the way that day's card would have been,
@@ -239,6 +257,7 @@ Small pieces, one working before the next starts:
 8. **Three more metrics, chosen from what the export actually holds** ✅ done
 9. **Replace the chart with something that needs no decoding** ✅ done
 10. **Calibrate the thresholds to each metric's own variability** ✅ done
+11. **Read runs of days, and this week against this season** ✅ done
 
 Everything in the original spec now works on real data.
 

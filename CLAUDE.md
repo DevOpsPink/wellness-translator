@@ -65,6 +65,11 @@ raise it rather than quietly working around it.
   spec: 5% is a rare event for a resting heart rate and an ordinary Tuesday
   for time in daylight, so one fixed line raised a warning on half of all daylight days. If a
   new threshold is ever needed, measure what an ordinary day looks like first.
+- **A rolling baseline cannot see a sustained shift**, and no amount of
+  cleverness in the daily verdict will change that: the seven-day average
+  chases the change and absorbs it within about four days. That is why there
+  is a second comparison of week against season. Do not try to make the daily
+  card detect drift.
 - **No charts that need decoding.** A line chart lived here briefly and was
   removed: it auto-scaled, so a flat week and a wild one drew the same
   dramatic shape, and it handed back a picture to interpret in an app whose

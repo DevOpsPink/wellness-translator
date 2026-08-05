@@ -3,13 +3,18 @@
  * day sits against its baseline, then put three cards on the page.
  */
 import { dailyHealthData as sampleData } from './data/mock-health-data.js';
-import { rollingBaseline, typicalDeviations } from './lib/baseline.js';
+import {
+  driftSeries,
+  rollingBaseline,
+  typicalDeviations,
+} from './lib/baseline.js';
 import { importAppleHealthExport } from './lib/health-import.js';
 import * as stored from './lib/stored-data.js';
 import {
   METRICS,
   TREND_DAYS,
   compareToBaseline,
+  driftSentence,
   formatDeviation,
   phraseFor,
   summaryFor,
@@ -29,6 +34,8 @@ let units = {};
  * which day happens to be on screen.
  */
 let ordinary = {};
+/** This week against the last three months, per metric, per day. */
+let drift = {};
 
 const unitFor = (metric) => units[metric.id] ?? metric.unit;
 
@@ -57,6 +64,7 @@ function readMetric(records, index, metric) {
     reason,
     wristOvernight: day.wristOvernight ?? null,
     recent: recentVerdicts(records, index, metric),
+    drift: drift[metric.id]?.[index] ?? null,
   };
 }
 
@@ -87,6 +95,9 @@ function recentVerdicts(records, index, metric) {
 
 function createCard(reading) {
   const { metric, value, baseline, deviation, status, recent } = reading;
+  const context = [trendSentence(recent), driftSentence(reading.drift)]
+    .filter(Boolean)
+    .join(' ');
 
   const card = document.createElement('article');
   card.className = `card card--${status}`;
@@ -114,7 +125,7 @@ function createCard(reading) {
     <div class="trend" aria-hidden="true">${recent
       .map((day) => `<span class="trend__day trend__day--${day}"></span>`)
       .join('')}</div>
-    <p class="trend__note">${trendSentence(recent)}</p>
+    <p class="trend__note">${context}</p>
   `;
 
   return card;
@@ -181,6 +192,9 @@ function show(records, source, recordedUnits = {}) {
 
   ordinary = Object.fromEntries(
     METRICS.map((metric) => [metric.id, typicalDeviations(records, metric.id)]),
+  );
+  drift = Object.fromEntries(
+    METRICS.map((metric) => [metric.id, driftSeries(records, metric.id)]),
   );
 
   selected = mostRecentFullDay(records);

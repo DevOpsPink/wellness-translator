@@ -61,6 +61,68 @@ export const VARIABILITY_SAMPLES = 90;
 /** Fewest days needed before a metric's own spread is trusted. */
 export const MIN_DAYS_FOR_VARIABILITY = 14;
 
+/** What "lately" and "the last few months" mean, in recorded days. */
+export const RECENT_SAMPLES = 7;
+export const SEASON_SAMPLES = 90;
+
+/** Mean of the last `want` days that have a reading, ending at `index`. */
+function meanOfRecent(records, metricId, index, want) {
+  const values = [];
+
+  for (let at = index; at >= 0 && values.length < want; at -= 1) {
+    const value = records[at][metricId];
+    if (Number.isFinite(value)) values.push(value);
+  }
+
+  if (values.length < Math.min(want, MIN_DAYS_FOR_BASELINE)) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+/**
+ * This week against the last few months.
+ *
+ * The daily verdict cannot see a slow slide, and not by oversight: the
+ * baseline is a seven-day average, so a metric that drops and stays down is
+ * back inside its own normal within about four days. Measured over five years
+ * of this export, runs of three consecutive off days happen seven times in
+ * total and never reach four — the baseline chases the change and swallows it.
+ *
+ * So the sustained shift needs a second, slower comparison. A week's average
+ * against a season's answers a different question from today's card: not "is
+ * today unusual" but "has your usual moved".
+ *
+ * Unlike the baseline, the day being judged is included — it is part of the
+ * week being described, not something being tested against it.
+ *
+ * @returns per day: the fraction this week sits above or below the season,
+ *   and how big that gap normally is for this metric.
+ */
+export function driftSeries(records, metricId) {
+  const gaps = records.map((_, index) => {
+    const week = meanOfRecent(records, metricId, index, RECENT_SAMPLES);
+    const season = meanOfRecent(records, metricId, index, SEASON_SAMPLES);
+    if (week === null || season === null || season === 0) return null;
+    return (week - season) / season;
+  });
+
+  const seen = [];
+
+  return gaps.map((gap) => {
+    const window = seen.slice(-VARIABILITY_SAMPLES).sort((a, b) => a - b);
+    if (gap !== null) seen.push(Math.abs(gap));
+
+    if (window.length < MIN_DAYS_FOR_VARIABILITY) return { gap, typical: null };
+
+    const middle = Math.floor(window.length / 2);
+    const typical =
+      window.length % 2 === 0
+        ? (window[middle - 1] + window[middle]) / 2
+        : window[middle];
+
+    return { gap, typical };
+  });
+}
+
 /**
  * How far a typical day sits from the baseline, per metric.
  *

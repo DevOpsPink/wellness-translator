@@ -290,6 +290,33 @@ export function phraseFor(
 /** How many days the strip of daily verdicts covers. */
 export const TREND_DAYS = 30;
 
+/** Shorter runs than this are the ordinary flicker of a noisy metric. */
+export const RUN_WORTH_MENTIONING = 3;
+
+/**
+ * How many days in a row, ending on the day shown, have been off your usual.
+ *
+ * This is the thing these metrics are actually good for. One low HRV reading
+ * is mostly noise — the figure moves 15% on an ordinary day here. Five in a
+ * row is not noise, and it is invisible if every day is judged alone.
+ */
+export function runOfOffDays(statuses) {
+  let run = 0;
+
+  for (let index = statuses.length - 1; index >= 0; index -= 1) {
+    const status = statuses[index];
+    if (status !== STATUS.WATCH && status !== STATUS.ALERT) {
+      // A day with nothing recorded ends the run rather than being counted
+      // through. "Five days running" is a claim about five days that were
+      // seen, and a gap is not evidence that the stretch continued.
+      break;
+    }
+    run += 1;
+  }
+
+  return run;
+}
+
 /**
  * The month in a sentence.
  *
@@ -313,7 +340,36 @@ export function trendSentence(statuses) {
   if (off === 0) {
     return `In your usual range on all of the last ${judged.length} recorded days.`;
   }
-  return `Off your usual on ${off} of the last ${judged.length} recorded days.`;
+
+  // A run is worth more than a tally, so it leads. The coloured marks above
+  // the sentence are its evidence: the last few are visibly not green.
+  const run = runOfOffDays(statuses);
+  const tally = `${off} of the last ${judged.length} recorded days`;
+
+  return run >= RUN_WORTH_MENTIONING
+    ? `Off your usual ${run} days running — ${tally} in all.`
+    : `Off your usual on ${tally}.`;
+}
+
+/**
+ * Whether your usual itself has moved.
+ *
+ * Said only when the gap is unusual for this metric, on the same footing as
+ * everything else: measured against how far a week normally drifts from its
+ * season, not against a number somebody picked.
+ */
+export function driftSentence(drift) {
+  if (drift === undefined || drift === null) return '';
+  const { gap, typical } = drift;
+  if (gap === null || typical === null || typical <= 0) return '';
+  if (Math.abs(gap) < typical * THRESHOLDS.WATCH) return '';
+
+  const percent = Math.abs(Math.round(gap * 100));
+  if (percent === 0) return '';
+
+  return `This week is running ${percent}% ${
+    gap > 0 ? 'above' : 'below'
+  } your last three months.`;
 }
 
 /** "sleep and HRV", "sleep, HRV and resting heart rate". */
