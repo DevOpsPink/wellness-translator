@@ -20,6 +20,10 @@ const el = (id) => document.getElementById(id);
 /** What is on screen: the loaded days, and which one is being looked at. */
 let days = [];
 let selected = 0;
+/** Units as the export wrote them — km/h or mph, depending on the phone. */
+let units = {};
+
+const unitFor = (metric) => units[metric.id] ?? metric.unit;
 
 /** Everything one card needs to know, worked out in one place. */
 function readMetric(records, index, metric) {
@@ -59,9 +63,9 @@ function createCard(reading) {
   const comparison =
     baseline === null || !Number.isFinite(value)
       ? ''
-      : `<p class="card__baseline">Usually ${metric.format(baseline)} ${
-          metric.unit
-        } · ${formatDeviation(deviation)}</p>`;
+      : `<p class="card__baseline">Usually ${metric.format(baseline)} ${unitFor(
+          metric,
+        )} · ${formatDeviation(deviation)}</p>`;
 
   card.innerHTML = `
     <span class="card__dot" aria-hidden="true"></span>
@@ -69,7 +73,7 @@ function createCard(reading) {
     <p class="card__value">
       ${Number.isFinite(value) ? metric.format(value) : '—'}<span
         class="card__unit"
-        >${Number.isFinite(value) ? metric.unit : ''}</span
+        >${Number.isFinite(value) ? unitFor(metric) : ''}</span
       >
     </p>
     ${comparison}
@@ -111,9 +115,34 @@ function goTo(index) {
   render();
 }
 
-function show(records, source) {
+/**
+ * Which day to open on.
+ *
+ * Not the last one in the file. An export is made partway through a day, so
+ * its final entry has whatever had synced by then — often a heart rate and
+ * nothing else. Opening on a screen of dashes makes the app look broken when
+ * it is only early. So it opens on the most recent day that has most of its
+ * readings in, and the forward arrow still reaches today.
+ */
+function mostRecentFullDay(records) {
+  // Strictly more than half. Exactly half is what the trailing partial day
+  // tends to have, which is the day this exists to skip.
+  const enough = Math.floor(METRICS.length / 2) + 1;
+
+  for (let index = records.length - 1; index >= 0; index -= 1) {
+    const present = METRICS.filter((metric) =>
+      Number.isFinite(records[index][metric.id]),
+    ).length;
+    if (present >= enough) return index;
+  }
+
+  return records.length - 1;
+}
+
+function show(records, source, recordedUnits = {}) {
   days = records;
-  selected = records.length - 1;
+  selected = mostRecentFullDay(records);
+  units = recordedUnits;
 
   el('footer-source').textContent = source;
   el('import').hidden = true;
@@ -138,21 +167,20 @@ async function loadFile(file) {
 
   try {
     const started = performance.now();
-    const { dailyHealthData, recordsRead } = await importAppleHealthExport(
-      file,
-      (fraction) => {
+    const { dailyHealthData, recordsRead, units: found } =
+      await importAppleHealthExport(file, (fraction) => {
         status.textContent = `Reading… ${Math.round(fraction * 100)}%`;
-      },
-    );
+      });
 
     const seconds = ((performance.now() - started) / 1000).toFixed(1);
-    const { saved } = stored.save(dailyHealthData);
+    const { saved } = stored.save(dailyHealthData, found);
 
     show(
       dailyHealthData,
       `${recordsRead.toLocaleString()} records over ${dailyHealthData.length.toLocaleString()} days, read in ${seconds}s.${
         saved ? '' : ' Could not be saved for next time.'
       }`,
+      found,
     );
   } catch (error) {
     status.textContent = `Could not read that file: ${error.message}`;
@@ -203,5 +231,6 @@ if (remembered !== null) {
   show(
     remembered.dailyHealthData,
     `${remembered.dailyHealthData.length.toLocaleString()} days, imported ${when}.`,
+    remembered.units,
   );
 }

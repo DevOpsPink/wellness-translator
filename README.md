@@ -7,14 +7,21 @@ of the way.
 
 ## The idea
 
-Three metrics, compared against your personal 7-day rolling average rather than
+Six metrics, compared against your personal 7-day rolling average rather than
 against a population norm:
 
-| Metric             | Bad direction |
-| ------------------ | ------------- |
-| Resting Heart Rate | higher        |
-| HRV                | lower         |
-| Sleep              | shorter       |
+| Metric             | Bad direction | What it adds                          |
+| ------------------ | ------------- | ------------------------------------- |
+| Resting Heart Rate | higher        | what the body costs while still       |
+| HRV                | lower         | how much slack the nervous system has |
+| Sleep              | shorter       | the night behind the day              |
+| Walking Heart Rate | higher        | what the same walk costs today        |
+| Walking Speed      | lower         | fatigue you have not noticed yet      |
+| Time in Daylight   | lower         | how much of the day happened outside  |
+
+The first three were the original spec. The last three were picked from what a
+real export turned out to contain: each is recorded on most of any
+ninety days, and none of them is a step count.
 
 Traffic light, per metric:
 
@@ -23,7 +30,7 @@ Traffic light, per metric:
 - 🔴 **Red** — more than 10% worse than baseline
 - ⚪️ **Collecting data** — fewer than 4 days of history, so no verdict is given
 
-One screen: a summary line for the day on top, three cards below, each showing
+One screen: a summary line for the day on top, six cards below, each showing
 the last 30 days behind its number. A single reading says almost nothing on its
 own — "34 ms" reads one way if last month was 33, quite another if it was 45
 and sliding. The dashed line across each sparkline is the personal baseline, so
@@ -129,6 +136,25 @@ instant, for deciding whether two sleep segments overlap, and the wall clock
 date as written, which is the one a person means by "Tuesday" even if they
 were somewhere else that week.
 
+Three more things the export forced:
+
+- **Some metrics are summed, others averaged.** Daylight arrives as a stream of
+  five-minute chunks and has to be added up. Averaging them would report five
+  minutes a day; adding up a day's heart rates would be meaningless.
+- **A reading belongs to the day its window mostly falls in.** Not every record
+  is a moment — a resting heart rate covers thirteen hours on average, a
+  walking heart rate nearly ten, and about one in ten of each runs across
+  midnight. Filing those by the hour they began puts a reading mostly taken on
+  Tuesday under Monday.
+- **Units come from the file.** The export uses whatever the phone is set to,
+  so a walking speed can arrive as km/hr or mi/hr. Reading the unit off the
+  record keeps the label right on somebody else's export.
+
+The app opens on the most recent day that has most of its readings in, not the
+last row in the file. An export is made partway through a day, so its final
+entry holds whatever had synced by then — often a heart rate and nothing else.
+The forward arrow still reaches it.
+
 ## Colour
 
 The palette is devops.pink's, taken the way that site builds it rather than by
@@ -177,6 +203,7 @@ Small pieces, one working before the next starts:
 5. **Import a real Apple Health export instead of the mock** ✅ done
 6. **Remember the import, and explain blank nights** ✅ done
 7. **Show the month behind each number, and walk the history** ✅ done
+8. **Three more metrics, chosen from what the export actually holds** ✅ done
 
 Everything in the original spec now works on real data.
 

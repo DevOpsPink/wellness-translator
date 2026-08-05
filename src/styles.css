@@ -90,7 +90,7 @@ body {
 }
 
 .app {
-  max-width: 34rem;
+  max-width: 46rem;
   margin: 0 auto;
 }
 
@@ -167,9 +167,13 @@ body {
 
 /* --- Cards ------------------------------------------------------------- */
 
+/* Six cards in one column is a scroll rather than a glance. Two columns
+   where there is room; one on a phone, where a card needs the full width for
+   its sentence. */
 .cards {
   display: grid;
   gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
 }
 
 /* Following the site's own card treatment: 1rem corners, and a shape defined

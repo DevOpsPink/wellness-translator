@@ -18,26 +18,33 @@ const KEY = 'wellness-translator:daily-data';
  * so the cost of being wrong is one re-import, and guessing at what an old
  * row meant is how quietly wrong numbers get displayed.
  */
-const VERSION = 1;
+const VERSION = 2;
 
-/** Trim the stored numbers to the precision the screen actually shows. */
-function round(value, places) {
-  return Number.isFinite(value)
-    ? Math.round(value * 10 ** places) / 10 ** places
-    : undefined;
+/**
+ * Trim the stored numbers to the precision the screen actually shows.
+ *
+ * Deliberately blind to which metric is which: adding one to the app should
+ * not mean remembering to teach this file about it, and a metric quietly
+ * dropped on save would be a bug that only shows up on the second visit.
+ */
+function shrink(day) {
+  const kept = {};
+  for (const [key, value] of Object.entries(day)) {
+    if (typeof value !== 'number') {
+      kept[key] = value;
+    } else if (Number.isFinite(value)) {
+      kept[key] = Math.round(value * 100) / 100;
+    }
+  }
+  return kept;
 }
 
-export function save(dailyHealthData) {
+export function save(dailyHealthData, units = {}) {
   const payload = {
     version: VERSION,
     importedAt: new Date().toISOString(),
-    days: dailyHealthData.map((day) => ({
-      date: day.date,
-      restingHeartRate: round(day.restingHeartRate, 1),
-      hrv: round(day.hrv, 1),
-      sleepHours: round(day.sleepHours, 2),
-      wristOvernight: day.wristOvernight,
-    })),
+    units,
+    days: dailyHealthData.map(shrink),
   };
 
   try {
@@ -60,7 +67,11 @@ export function load() {
       localStorage.removeItem(KEY);
       return null;
     }
-    return { dailyHealthData: payload.days, importedAt: payload.importedAt };
+    return {
+      dailyHealthData: payload.days,
+      importedAt: payload.importedAt,
+      units: payload.units ?? {},
+    };
   } catch {
     localStorage.removeItem(KEY);
     return null;

@@ -9,11 +9,49 @@
  * looked at twice.
  */
 
-/** The record types worth stopping for, out of the dozens in the file. */
+/**
+ * The record types worth stopping for, out of the forty-odd in the file.
+ *
+ * `how` matters as much as the name. Daylight arrives as a stream of
+ * five-minute chunks and has to be added up; the rest are readings of a
+ * quantity and have to be averaged. Adding up a day's heart rates would be
+ * meaningless, and averaging five-minute daylight chunks would report five.
+ */
 const WANTED = new Map([
-  ['HKQuantityTypeIdentifierRestingHeartRate', 'restingHeartRate'],
-  ['HKQuantityTypeIdentifierHeartRateVariabilitySDNN', 'hrv'],
-  ['HKCategoryTypeIdentifierSleepAnalysis', 'sleep'],
+  [
+    'HKQuantityTypeIdentifierRestingHeartRate',
+    { field: 'restingHeartRate', how: 'mean' },
+  ],
+  [
+    'HKQuantityTypeIdentifierHeartRateVariabilitySDNN',
+    { field: 'hrv', how: 'mean' },
+  ],
+  [
+    'HKQuantityTypeIdentifierWalkingHeartRateAverage',
+    { field: 'walkingHeartRate', how: 'mean' },
+  ],
+  [
+    'HKQuantityTypeIdentifierWalkingSpeed',
+    { field: 'walkingSpeed', how: 'mean' },
+  ],
+  [
+    'HKQuantityTypeIdentifierTimeInDaylight',
+    { field: 'daylightMinutes', how: 'sum' },
+  ],
+  ['HKCategoryTypeIdentifierSleepAnalysis', { field: 'sleep', how: 'sleep' }],
+]);
+
+/**
+ * How Apple writes a unit, and how a person reads it.
+ *
+ * The export uses whatever units the phone is set to, so a walking speed can
+ * arrive as km/hr or mi/hr. Taking the unit from the record rather than
+ * assuming one keeps the label honest on somebody else's export.
+ */
+const UNIT_LABELS = new Map([
+  ['count/min', 'bpm'],
+  ['km/hr', 'km/h'],
+  ['mi/hr', 'mph'],
 ]);
 
 /**
@@ -68,19 +106,40 @@ function parseStamp(text) {
   const offsetMinutes =
     (sign === '-' ? -1 : 1) * (Number(offHours) * 60 + Number(offMins));
 
+  const wall = Date.UTC(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute),
+    Number(second),
+  );
+
   return {
-    epoch:
-      Date.UTC(
-        Number(year),
-        Number(month) - 1,
-        Number(day),
-        Number(hour),
-        Number(minute),
-        Number(second),
-      ) -
-      offsetMinutes * 60_000,
+    epoch: wall - offsetMinutes * 60_000,
+    // The same instant with the offset left in, so that adding to it walks
+    // the local clock rather than UTC.
+    wall,
     date: `${year}-${month}-${day}`,
   };
+}
+
+/**
+ * Which day a reading belongs to.
+ *
+ * Not every record is a moment. A resting heart rate covers thirteen hours on
+ * average and a walking heart rate nearly ten, and about one in ten of each
+ * runs across midnight. Filing those by the hour they began puts a reading
+ * mostly taken on Tuesday under Monday, so the day is decided by where the
+ * middle of the window falls.
+ *
+ * For the instantaneous records — HRV, walking speed, daylight chunks — the
+ * middle is the start, and this changes nothing.
+ */
+function dayOf(start, end) {
+  if (end === null || end.epoch <= start.epoch) return start.date;
+  const middle = start.wall + (end.epoch - start.epoch) / 2;
+  return new Date(middle).toISOString().slice(0, 10);
 }
 
 /** Pull one attribute out of a record line without parsing the whole tag. */
@@ -179,17 +238,25 @@ function everyDateBetween(first, last) {
  * @param onProgress  called with 0..1 as the file streams past
  */
 export async function importAppleHealthExport(file, onProgress = () => {}) {
-  const averages = { restingHeartRate: new Map(), hrv: new Map() };
+  // One running total per metric per day; whether it ends up a sum or a mean
+  // is decided at the end, from `how`.
+  const tallies = new Map();
+  for (const { field, how } of WANTED.values()) {
+    if (how !== 'sleep') tallies.set(field, new Map());
+  }
+
+  const units = {};
   const sleepSegments = [];
   const nightReadings = new Map();
   let heartRateRecords = 0;
   let recordsRead = 0;
 
-  const addToAverage = (metric, date, value) => {
-    const running = averages[metric].get(date) ?? { total: 0, count: 0 };
+  const tally = (field, date, value) => {
+    const byDate = tallies.get(field);
+    const running = byDate.get(date) ?? { total: 0, count: 0 };
     running.total += value;
     running.count += 1;
-    averages[metric].set(date, running);
+    byDate.set(date, running);
   };
 
   await forEachLine(
@@ -217,21 +284,21 @@ export async function importAppleHealthExport(file, onProgress = () => {}) {
         return;
       }
 
-      const metric = WANTED.get(type);
-      if (metric === undefined) return;
+      const wanted = WANTED.get(type);
+      if (wanted === undefined) return;
 
       const value = attribute(line, 'value');
       const start = parseStamp(attribute(line, 'startDate') ?? '');
       if (value === null || start === null) return;
       recordsRead += 1;
 
-      if (metric === 'sleep') {
+      const end = parseStamp(attribute(line, 'endDate') ?? '');
+
+      if (wanted.how === 'sleep') {
         // "InBed" is lying down, not sleeping, and it overlaps the asleep
         // segments it brackets. "Awake" is the opposite. Only Asleep* counts,
         // whether it is the modern Core/Deep/REM or the older Unspecified.
         if (!value.startsWith('HKCategoryValueSleepAnalysisAsleep')) return;
-
-        const end = parseStamp(attribute(line, 'endDate') ?? '');
         if (end === null || end.epoch <= start.epoch) return;
 
         sleepSegments.push({
@@ -245,7 +312,14 @@ export async function importAppleHealthExport(file, onProgress = () => {}) {
       }
 
       const number = Number(value);
-      if (Number.isFinite(number)) addToAverage(metric, start.date, number);
+      if (!Number.isFinite(number)) return;
+
+      if (units[wanted.field] === undefined) {
+        const unit = attribute(line, 'unit');
+        if (unit !== null) units[wanted.field] = UNIT_LABELS.get(unit) ?? unit;
+      }
+
+      tally(wanted.field, dayOf(start, end), number);
     },
     onProgress,
   );
@@ -261,20 +335,18 @@ export async function importAppleHealthExport(file, onProgress = () => {}) {
   }
 
   const allDates = [
-    ...averages.restingHeartRate.keys(),
-    ...averages.hrv.keys(),
+    ...[...tallies.values()].flatMap((byDate) => [...byDate.keys()]),
     ...sleepHoursByDate.keys(),
   ].sort();
 
   if (allDates.length === 0) {
-    throw new Error(
-      'No resting heart rate, HRV or sleep records found in that file.',
-    );
+    throw new Error('No records this app can use were found in that file.');
   }
 
-  const mean = (metric, date) => {
-    const running = averages[metric].get(date);
-    return running === undefined ? undefined : running.total / running.count;
+  const valueFor = (field, how, date) => {
+    const running = tallies.get(field).get(date);
+    if (running === undefined) return undefined;
+    return how === 'sum' ? running.total : running.total / running.count;
   };
 
   const wristFor = (date) => {
@@ -291,13 +363,17 @@ export async function importAppleHealthExport(file, onProgress = () => {}) {
   const dailyHealthData = everyDateBetween(
     allDates[0],
     allDates[allDates.length - 1],
-  ).map((date) => ({
-    date,
-    restingHeartRate: mean('restingHeartRate', date),
-    hrv: mean('hrv', date),
-    sleepHours: sleepHoursByDate.get(date),
-    wristOvernight: wristFor(date),
-  }));
+  ).map((date) => {
+    const day = {
+      date,
+      sleepHours: sleepHoursByDate.get(date),
+      wristOvernight: wristFor(date),
+    };
+    for (const { field, how } of WANTED.values()) {
+      if (how !== 'sleep') day[field] = valueFor(field, how, date);
+    }
+    return day;
+  });
 
-  return { dailyHealthData, recordsRead };
+  return { dailyHealthData, recordsRead, units };
 }

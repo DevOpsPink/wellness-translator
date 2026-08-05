@@ -95,6 +95,57 @@ export const METRICS = [
         worn: 'The watch was on all night but recorded no sleep.',
       })[wristOvernight] ?? 'No sleep recorded.',
   },
+  {
+    id: 'walkingHeartRate',
+    label: 'Walking Heart Rate',
+    shortLabel: 'walking heart rate',
+    unit: 'bpm',
+    worseWhen: 'higher',
+    format: (value) => Math.round(value).toString(),
+    // Resting heart rate says what the body costs while still. This says what
+    // the same walk costs today, which moves earlier and for different
+    // reasons.
+    phrases: {
+      [STATUS.GOOD]: 'Walking cost your heart what it usually does.',
+      better: 'Walking cost your heart less than it usually does.',
+      [STATUS.WATCH]:
+        'Your heart worked a little harder than usual while walking.',
+      [STATUS.ALERT]:
+        'Your heart worked noticeably harder than usual while walking.',
+    },
+  },
+  {
+    id: 'walkingSpeed',
+    label: 'Walking Speed',
+    shortLabel: 'walking speed',
+    unit: 'km/h',
+    worseWhen: 'lower',
+    format: (value) => value.toFixed(1),
+    phrases: {
+      [STATUS.GOOD]: 'You walked at your usual pace.',
+      better: 'You walked faster than you usually do.',
+      [STATUS.WATCH]: 'You walked a little slower than you usually do.',
+      [STATUS.ALERT]: 'You walked noticeably slower than you usually do.',
+    },
+  },
+  {
+    id: 'daylightMinutes',
+    label: 'Time in Daylight',
+    shortLabel: 'time in daylight',
+    unit: 'min',
+    worseWhen: 'lower',
+    format: (value) => Math.round(value).toString(),
+    phrases: {
+      [STATUS.GOOD]: 'You were out in daylight about as long as usual.',
+      better: 'You were out in daylight longer than you usually are.',
+      [STATUS.WATCH]: 'You saw a little less daylight than you usually do.',
+      [STATUS.ALERT]: 'You saw much less daylight than you usually do.',
+    },
+    // No explanation offered on purpose. Sleep can name its cause because the
+    // overnight heart rate says whether the watch was on; nothing here
+    // evidences why a daytime figure is missing, and the wrist signal is
+    // about the night, so it cannot be borrowed to answer for the day.
+  },
 ];
 
 /**

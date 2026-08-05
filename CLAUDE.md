@@ -56,8 +56,14 @@ raise it rather than quietly working around it.
   field per metric, plus `summaryFor`. It is the one file to open to reword
   or translate the app.
 - **Per-metric behaviour is data, not branches.** `worseWhen` says which
-  direction is bad; the comparison logic reads it. Resist adding an `if` per
-  metric.
+  direction is bad, `how` in the importer's `WANTED` map says summed or
+  averaged; the logic reads them. Resist adding an `if` per metric. Adding a
+  metric should mean one entry in `WANTED`, one in `METRICS`, and nothing
+  else — if a third file needs teaching about it, that file is too specific.
+- **Never state a cause you cannot evidence.** Sleep can say the watch was off
+  because the overnight heart rate proves it. Daylight deliberately says
+  nothing about why it is missing, because the wrist signal is about the night
+  and cannot answer for the day.
 - **`baseline.js` owns the maths**, `metrics.js` owns the meaning, `app.js`
   owns the DOM. Keep them apart.
 
