@@ -23,12 +23,38 @@ The first three were the original spec. The last three were picked from what a
 real export turned out to contain: each is recorded on most of any
 ninety days, and none of them is a step count.
 
-Traffic light, per metric:
+Traffic light, per metric, counted in **typical days for that metric** rather
+than in fixed percentages:
 
-- 🟢 **Green** — within ±5% of baseline
-- 🟡 **Yellow** — 5–10% worse than baseline
-- 🔴 **Red** — more than 10% worse than baseline
-- ⚪️ **Collecting data** — fewer than 4 days of history, so no verdict is given
+- 🟢 **Green** — no further off than twice an ordinary day
+- 🟡 **Yellow** — two to three times an ordinary day
+- 🔴 **Red** — more than three times
+- ⚪️ **Collecting data** — too little history to judge, so nothing is claimed
+
+The spec originally said 5% and 10%. Measured against years of real data
+those fit resting heart rate almost exactly — an ordinary day moves it 3.1% —
+and were meaningless for everything noisier. Daylight swings 32% on an ordinary
+day, because some days you are out for twenty minutes and some for four hours,
+so a 5% line raised a warning on half of all days. Sleep, 46%. An alarm that never
+stops is not an alarm.
+
+Each metric is now measured against its own ordinary day, taken as the median
+distance from baseline over its last 90 *recorded* days. That levels the cards
+out at roughly 90% green, 6% yellow, 4% red apiece, so a colour finally means
+the same thing wherever it appears:
+
+| Metric             | An ordinary day moves it | Was flagged | Now |
+| ------------------ | ------------------------ | ----------- | --- |
+| Walking Heart Rate | 2.7%                     | 8%          | 11% |
+| Resting Heart Rate | 3.1%                     | 11%         | 8%  |
+| Walking Speed      | 2.9%                     | 15%         | 8%  |
+| HRV                | 13.2%                    | 39%         | 8%  |
+| Sleep              | 15.0%                    | 46%         | 10% |
+| Time in Daylight   | 32.0%                    | 49%         | 9%  |
+
+The median is used rather than the mean so that a fortnight of illness does not
+raise the bar for noticing the next one. The 5% figure survives as the fallback
+for a metric with too little history to know its own spread.
 
 One screen: a summary line for the day on top, six cards below. A single
 reading says almost nothing on its own, so each card also carries the last 30
@@ -212,6 +238,7 @@ Small pieces, one working before the next starts:
 7. **Show the month behind each number, and walk the history** ✅ done
 8. **Three more metrics, chosen from what the export actually holds** ✅ done
 9. **Replace the chart with something that needs no decoding** ✅ done
+10. **Calibrate the thresholds to each metric's own variability** ✅ done
 
 Everything in the original spec now works on real data.
 

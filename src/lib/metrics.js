@@ -149,15 +149,30 @@ export const METRICS = [
 ];
 
 /**
- * How far from baseline is far enough to say something, as a fraction.
+ * How far from baseline is far enough to say something — counted in typical
+ * days for that metric, not in fixed percentages.
  *
- * Both bounds are inclusive of the gentler verdict: exactly 5% worse is still
- * green, exactly 10% worse is still yellow.
+ * The original spec said 5% and 10%. Measured against years of real
+ * data those turned out to fit resting heart rate almost exactly and to be
+ * meaningless for everything noisier: daylight was flagged on half of all days and
+ * sleep on nearly half. A warning that never stops is not a warning.
+ *
+ * Two and three times an ordinary day put roughly one day in seven at yellow
+ * and one in twenty at red, whatever the metric — so the colour finally means
+ * the same thing on every card.
+ *
+ * Both bounds are inclusive of the gentler verdict.
  */
 export const THRESHOLDS = {
-  WATCH: 0.05, // 5% worse than usual
-  ALERT: 0.1, // 10% worse than usual
+  WATCH: 2, // twice as far from usual as an ordinary day
+  ALERT: 3, // three times
 };
+
+/**
+ * Stands in until a metric has enough history to know its own spread — the
+ * spec's original figure, now doing the one job it is actually suited to.
+ */
+export const DEFAULT_TYPICAL_DEVIATION = 0.05;
 
 /**
  * Turn today's number into a traffic-light status.
@@ -165,11 +180,13 @@ export const THRESHOLDS = {
  * @param metric   one entry from METRICS
  * @param value    today's reading
  * @param baseline the personal average, or null if there isn't one yet
+ * @param typical  how far an ordinary day sits from that average for this
+ *                 metric, or null while there is too little history
  * @returns {{status: string, deviation: number|null}} `deviation` is the
  *   signed change against baseline (+0.06 = 6% higher), regardless of whether
  *   higher is good or bad for this metric.
  */
-export function compareToBaseline(metric, value, baseline) {
+export function compareToBaseline(metric, value, baseline, typical = null) {
   // Two different silences, and the card should not confuse them: nothing was
   // measured today, or there is not yet enough history to measure it against.
   if (!Number.isFinite(value)) {
@@ -177,6 +194,7 @@ export function compareToBaseline(metric, value, baseline) {
       status: STATUS.COLLECTING,
       deviation: null,
       worse: null,
+      ordinary: null,
       reason: 'no-reading',
     };
   }
@@ -185,6 +203,7 @@ export function compareToBaseline(metric, value, baseline) {
       status: STATUS.COLLECTING,
       deviation: null,
       worse: null,
+      ordinary: null,
       reason: 'no-baseline',
     };
   }
@@ -202,19 +221,26 @@ export function compareToBaseline(metric, value, baseline) {
   // places is far finer than the whole numbers of percent ever displayed.
   const worse = Math.round(rawWorse * 1e6) / 1e6;
 
+  // An ordinary day's drift for this metric, which is what the thresholds are
+  // counted in. Zero would make every reading an emergency.
+  const ordinary =
+    Number.isFinite(typical) && typical > 0
+      ? typical
+      : DEFAULT_TYPICAL_DEVIATION;
+
   // Note that a big move the *good* way lands here as a large negative
   // `worse` and comes out green, which is the intended reading: nine hours of
   // sleep is not a warning.
   let status;
-  if (worse <= THRESHOLDS.WATCH) {
+  if (worse <= ordinary * THRESHOLDS.WATCH) {
     status = STATUS.GOOD;
-  } else if (worse <= THRESHOLDS.ALERT) {
+  } else if (worse <= ordinary * THRESHOLDS.ALERT) {
     status = STATUS.WATCH;
   } else {
     status = STATUS.ALERT;
   }
 
-  return { status, deviation, worse, reason: null };
+  return { status, deviation, worse, ordinary, reason: null };
 }
 
 /**
@@ -233,7 +259,13 @@ export function compareToBaseline(metric, value, baseline) {
 export function phraseFor(
   metric,
   status,
-  { days = 0, worse = null, reason = null, wristOvernight = null } = {},
+  {
+    days = 0,
+    worse = null,
+    ordinary = null,
+    reason = null,
+    wristOvernight = null,
+  } = {},
 ) {
   if (reason === 'no-reading') {
     return metric.explainMissing === undefined
@@ -243,7 +275,13 @@ export function phraseFor(
   if (status === STATUS.COLLECTING) {
     return `Collecting data — ${days} of ${MIN_DAYS_FOR_BASELINE} days`;
   }
-  if (status === STATUS.GOOD && worse !== null && worse < -THRESHOLDS.WATCH) {
+  // Measured in the same typical days as the warning thresholds, so "better
+  // than usual" is as hard to trigger as "worse than usual".
+  const better =
+    worse !== null &&
+    ordinary !== null &&
+    worse < -(ordinary * THRESHOLDS.WATCH);
+  if (status === STATUS.GOOD && better) {
     return metric.phrases.better;
   }
   return metric.phrases[status];

@@ -3,7 +3,7 @@
  * day sits against its baseline, then put three cards on the page.
  */
 import { dailyHealthData as sampleData } from './data/mock-health-data.js';
-import { rollingBaseline } from './lib/baseline.js';
+import { rollingBaseline, typicalDeviations } from './lib/baseline.js';
 import { importAppleHealthExport } from './lib/health-import.js';
 import * as stored from './lib/stored-data.js';
 import {
@@ -23,6 +23,12 @@ let days = [];
 let selected = 0;
 /** Units as the export wrote them — km/h or mph, depending on the phone. */
 let units = {};
+/**
+ * How far an ordinary day sits from baseline, per metric, per day. Worked out
+ * once when the data arrives: it walks the whole history and is unchanged by
+ * which day happens to be on screen.
+ */
+let ordinary = {};
 
 const unitFor = (metric) => units[metric.id] ?? metric.unit;
 
@@ -31,11 +37,13 @@ function readMetric(records, index, metric) {
   const day = records[index];
   const value = day[metric.id];
   const { average, days: history } = rollingBaseline(records, metric.id, index);
-  const { status, deviation, worse, reason } = compareToBaseline(
-    metric,
-    value,
-    average,
-  );
+  const {
+    status,
+    deviation,
+    worse,
+    ordinary: typical,
+    reason,
+  } = compareToBaseline(metric, value, average, ordinary[metric.id]?.[index]);
 
   return {
     metric,
@@ -45,6 +53,7 @@ function readMetric(records, index, metric) {
     status,
     deviation,
     worse,
+    ordinary: typical,
     reason,
     wristOvernight: day.wristOvernight ?? null,
     recent: recentVerdicts(records, index, metric),
@@ -64,7 +73,12 @@ function recentVerdicts(records, index, metric) {
   for (let at = from; at <= index; at += 1) {
     const { average } = rollingBaseline(records, metric.id, at);
     verdicts.push(
-      compareToBaseline(metric, records[at][metric.id], average).status,
+      compareToBaseline(
+        metric,
+        records[at][metric.id],
+        average,
+        ordinary[metric.id]?.[at],
+      ).status,
     );
   }
 
@@ -163,8 +177,13 @@ function mostRecentFullDay(records) {
 
 function show(records, source, recordedUnits = {}) {
   days = records;
-  selected = mostRecentFullDay(records);
   units = recordedUnits;
+
+  ordinary = Object.fromEntries(
+    METRICS.map((metric) => [metric.id, typicalDeviations(records, metric.id)]),
+  );
+
+  selected = mostRecentFullDay(records);
 
   el('footer-source').textContent = source;
   el('import').hidden = true;

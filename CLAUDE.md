@@ -60,6 +60,11 @@ raise it rather than quietly working around it.
   averaged; the logic reads them. Resist adding an `if` per metric. Adding a
   metric should mean one entry in `WANTED`, one in `METRICS`, and nothing
   else — if a third file needs teaching about it, that file is too specific.
+- **Thresholds are relative to each metric's own spread, never fixed
+  percentages.** This was the app's worst bug and it came straight from the
+  spec: 5% is a rare event for a resting heart rate and an ordinary Tuesday
+  for time in daylight, so one fixed line raised a warning on half of all daylight days. If a
+  new threshold is ever needed, measure what an ordinary day looks like first.
 - **No charts that need decoding.** A line chart lived here briefly and was
   removed: it auto-scaled, so a flat week and a wild one drew the same
   dramatic shape, and it handed back a picture to interpret in an app whose
