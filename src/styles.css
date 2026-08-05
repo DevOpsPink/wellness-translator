@@ -1,0 +1,153 @@
+/* Colours live here and nowhere else, so a repaint never means touching logic. */
+:root {
+  --bg: #f6f6f4;
+  --surface: #ffffff;
+  --border: #e3e2dd;
+  --text: #1d1d1b;
+  --text-muted: #6b6a66;
+
+  --good: #1f8a4c;
+  --watch: #b8860b;
+  --alert: #c0392b;
+  --collecting: #9a9a95;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16161a;
+    --surface: #1f1f24;
+    --border: #32323a;
+    --text: #f2f2ef;
+    --text-muted: #a1a19c;
+
+    --good: #4ec27f;
+    --watch: #e0b13c;
+    --alert: #ef6f61;
+    --collecting: #77777f;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 2rem 1.25rem 3rem;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui,
+    sans-serif;
+  line-height: 1.5;
+}
+
+.app {
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+/* --- Summary line ------------------------------------------------------ */
+
+.summary {
+  margin-bottom: 1.75rem;
+}
+
+.summary__date {
+  margin: 0 0 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.summary__verdict {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* --- Cards ------------------------------------------------------------- */
+
+.cards {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.card {
+  position: relative;
+  padding: 1.125rem 1.25rem 1.125rem 2.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+
+/* The traffic light itself. One rule per status keeps the mapping obvious. */
+.card__dot {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.25rem;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: var(--collecting);
+}
+
+.card--good .card__dot {
+  background: var(--good);
+}
+.card--watch .card__dot {
+  background: var(--watch);
+}
+.card--alert .card__dot {
+  background: var(--alert);
+}
+
+.card__label {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.card__value {
+  margin: 0.125rem 0 0;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.card__unit {
+  margin-left: 0.25rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.card__status {
+  margin: 0.25rem 0 0;
+  font-size: 0.9375rem;
+}
+
+.card--good .card__status {
+  color: var(--good);
+}
+.card--watch .card__status {
+  color: var(--watch);
+}
+.card--alert .card__status {
+  color: var(--alert);
+}
+.card--collecting .card__status {
+  color: var(--collecting);
+}
+
+/* --- Footer ------------------------------------------------------------ */
+
+.footer {
+  margin-top: 2rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  text-align: center;
+}

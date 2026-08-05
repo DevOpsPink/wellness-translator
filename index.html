@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wellness Translator</title>
+    <link rel="stylesheet" href="src/styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="summary">
+        <p class="summary__date" id="summary-date"></p>
+        <!-- Step 6 fills this in from the three card statuses. -->
+        <h1 class="summary__verdict" id="summary-verdict">Here is your day</h1>
+      </header>
+
+      <section class="cards" id="cards" aria-label="Today's metrics"></section>
+
+      <footer class="footer">
+        Everything stays in this browser. Nothing is uploaded anywhere.
+      </footer>
+    </main>
+
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>
