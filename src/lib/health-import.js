@@ -17,6 +17,26 @@ const WANTED = new Map([
 ]);
 
 /**
+ * Telling "did not sleep" apart from "was not wearing the watch".
+ *
+ * A missing night looks identical either way in the sleep records — there is
+ * simply nothing there. But a watch on a wrist takes a heart rate reading
+ * every few minutes whatever it thinks of your sleep, and a watch on a
+ * charger takes none. So the ordinary heart rate stream, which this app
+ * otherwise has no use for, answers the question.
+ *
+ * On this export the separation is stark: nights with sleep recorded average
+ * 74 readings between midnight and six, nights without average 4.
+ *
+ * The window is local clock time, which suits someone who sleeps at night and
+ * would misjudge someone who works nights.
+ */
+const NIGHT_ENDS_AT_HOUR = 6;
+
+/** Readings across the night window that mean the watch was really on. */
+const WORN_MIN_READINGS = 30;
+
+/**
  * A day whose sleep adds up to less than this is treated as unrecorded.
  *
  * Real exports are full of days holding six or eight minutes of "asleep" —
@@ -161,6 +181,8 @@ function everyDateBetween(first, last) {
 export async function importAppleHealthExport(file, onProgress = () => {}) {
   const averages = { restingHeartRate: new Map(), hrv: new Map() };
   const sleepSegments = [];
+  const nightReadings = new Map();
+  let heartRateRecords = 0;
   let recordsRead = 0;
 
   const addToAverage = (metric, date, value) => {
@@ -179,7 +201,23 @@ export async function importAppleHealthExport(file, onProgress = () => {}) {
       if (typeAt === -1) return;
 
       const typeEnd = line.indexOf('"', typeAt + 6);
-      const metric = WANTED.get(line.slice(typeAt + 6, typeEnd));
+      const type = line.slice(typeAt + 6, typeEnd);
+
+      // Plain heart rate is by far the bulk of the file and no metric is
+      // built from it. All that is taken is the fact that a reading happened
+      // during the night, which is the evidence that the watch was worn.
+      if (type === 'HKQuantityTypeIdentifierHeartRate') {
+        const at = attribute(line, 'startDate');
+        if (at === null) return;
+        heartRateRecords += 1;
+        if (Number(at.slice(11, 13)) < NIGHT_ENDS_AT_HOUR) {
+          const date = at.slice(0, 10);
+          nightReadings.set(date, (nightReadings.get(date) ?? 0) + 1);
+        }
+        return;
+      }
+
+      const metric = WANTED.get(type);
       if (metric === undefined) return;
 
       const value = attribute(line, 'value');
@@ -239,6 +277,17 @@ export async function importAppleHealthExport(file, onProgress = () => {}) {
     return running === undefined ? undefined : running.total / running.count;
   };
 
+  const wristFor = (date) => {
+    // With no heart rate anywhere in the export there is no evidence either
+    // way, and "the watch was not on your wrist" would be a confident lie
+    // told about every single night. Absence of the signal is not the signal.
+    if (heartRateRecords === 0) return 'unknown';
+
+    const readings = nightReadings.get(date) ?? 0;
+    if (readings >= WORN_MIN_READINGS) return 'worn';
+    return readings === 0 ? 'off' : 'partly';
+  };
+
   const dailyHealthData = everyDateBetween(
     allDates[0],
     allDates[allDates.length - 1],
@@ -247,6 +296,7 @@ export async function importAppleHealthExport(file, onProgress = () => {}) {
     restingHeartRate: mean('restingHeartRate', date),
     hrv: mean('hrv', date),
     sleepHours: sleepHoursByDate.get(date),
+    wristOvernight: wristFor(date),
   }));
 
   return { dailyHealthData, recordsRead };

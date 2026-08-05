@@ -85,6 +85,15 @@ export const METRICS = [
       [STATUS.WATCH]: 'You slept a little less than you usually do.',
       [STATUS.ALERT]: 'You slept a lot less than you usually do.',
     },
+    // A blank night has three quite different explanations, and which one it
+    // is decides what, if anything, the person should do about it.
+    explainMissing: (wristOvernight) =>
+      ({
+        off: 'No sleep recorded — the watch was not on your wrist.',
+        partly:
+          'No sleep recorded — the watch was only on for part of the night.',
+        worn: 'The watch was on all night but recorded no sleep.',
+      })[wristOvernight] ?? 'No sleep recorded.',
   },
 ];
 
@@ -110,8 +119,23 @@ export const THRESHOLDS = {
  *   higher is good or bad for this metric.
  */
 export function compareToBaseline(metric, value, baseline) {
-  if (!Number.isFinite(value) || !Number.isFinite(baseline) || baseline === 0) {
-    return { status: STATUS.COLLECTING, deviation: null, worse: null };
+  // Two different silences, and the card should not confuse them: nothing was
+  // measured today, or there is not yet enough history to measure it against.
+  if (!Number.isFinite(value)) {
+    return {
+      status: STATUS.COLLECTING,
+      deviation: null,
+      worse: null,
+      reason: 'no-reading',
+    };
+  }
+  if (!Number.isFinite(baseline) || baseline === 0) {
+    return {
+      status: STATUS.COLLECTING,
+      deviation: null,
+      worse: null,
+      reason: 'no-baseline',
+    };
   }
 
   const deviation = (value - baseline) / baseline;
@@ -139,7 +163,7 @@ export function compareToBaseline(metric, value, baseline) {
     status = STATUS.ALERT;
   }
 
-  return { status, deviation, worse };
+  return { status, deviation, worse, reason: null };
 }
 
 /**
@@ -155,7 +179,16 @@ export function compareToBaseline(metric, value, baseline) {
  * does not. The dividing line is the same 5% that separates green from
  * yellow, read in the other direction.
  */
-export function phraseFor(metric, status, { days = 0, worse = null } = {}) {
+export function phraseFor(
+  metric,
+  status,
+  { days = 0, worse = null, reason = null, wristOvernight = null } = {},
+) {
+  if (reason === 'no-reading') {
+    return metric.explainMissing === undefined
+      ? 'Nothing recorded for this day.'
+      : metric.explainMissing(wristOvernight);
+  }
   if (status === STATUS.COLLECTING) {
     return `Collecting data — ${days} of ${MIN_DAYS_FOR_BASELINE} days`;
   }

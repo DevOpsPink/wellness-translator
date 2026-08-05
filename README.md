@@ -86,6 +86,38 @@ Four decisions were forced by what real exports actually contain:
   picked up briefly. Taken at face value that reads as 98% below baseline and
   lights up red: a false alarm manufactured out of missing data.
 
+### Was the watch even on?
+
+A night with no sleep recorded looks the same whether you slept badly or left
+the watch on the charger — the records are simply absent either way. But a
+watch on a wrist takes a heart rate reading every few minutes regardless of
+what it thinks of your sleep, so the ordinary heart rate stream answers the
+question the sleep records cannot.
+
+On a real export the separation is stark. Counting readings between midnight
+and six:
+
+| overnight readings | sleep recorded | no sleep |
+| ------------------ | -------------- | -------- |
+| 0                  | 0              | 96       |
+| 1–29               | 0              | 30       |
+| 30+                | 273            | 1        |
+
+So a blank night gets one of three explanations: the watch was off, it was on
+for only part of the night, or it was on all night and recorded no sleep
+anyway — which is a settings problem rather than a habit. If the export holds
+no heart rate at all, the answer is "unknown" rather than "off": absence of
+the signal is not the signal.
+
+The window is local clock time, which suits someone who sleeps at night and
+would misjudge someone who works nights.
+
+### Remembering an import
+
+The parsed days — one row each, a few hundred kilobytes — are kept in
+`localStorage`, so opening the page again does not mean re-reading a gigabyte.
+It never leaves the device, and **Forget this data** wipes it.
+
 Timestamps carry their own UTC offset. Both readings are kept — the absolute
 instant, for deciding whether two sleep segments overlap, and the wall clock
 date as written, which is the one a person means by "Tuesday" even if they
@@ -98,6 +130,7 @@ index.html                     the single screen
 src/app.js                     pulls it together, renders the cards
 src/styles.css                 all colours, including the traffic light
 src/lib/health-import.js       streams export.xml into daily records
+src/lib/stored-data.js         keeps the import in localStorage
 src/lib/baseline.js            the 7-day rolling average
 src/lib/metrics.js             metric definitions, thresholds, wording
 src/data/mock-health-data.js   10 days of stand-in data, for the sample view
@@ -112,10 +145,9 @@ Small pieces, one working before the next starts:
 3. **Plain-language phrasing per metric** ✅ done
 4. **The summary line for the day** ✅ done
 5. **Import a real Apple Health export instead of the mock** ✅ done
+6. **Remember the import, and explain blank nights** ✅ done
 
-Everything in the original spec now works on real data. The obvious next thing
-is remembering the import between visits, so a gigabyte does not have to be
-re-read every time the page is opened.
+Everything in the original spec now works on real data.
 
 The summary line is deliberately not a score. Averaging three metrics into one
 number would invent a precision none of them has and hide the only thing worth

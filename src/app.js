@@ -5,6 +5,7 @@
 import { dailyHealthData as sampleData } from './data/mock-health-data.js';
 import { rollingBaseline } from './lib/baseline.js';
 import { importAppleHealthExport } from './lib/health-import.js';
+import * as stored from './lib/stored-data.js';
 import {
   METRICS,
   compareToBaseline,
@@ -31,25 +32,33 @@ function readMetric(records, metric) {
   const today = records[records.length - 1];
   const value = today[metric.id];
   const { average, days } = rollingBaseline(records, metric.id);
-  const { status, deviation, worse } = compareToBaseline(metric, value, average);
+  const { status, deviation, worse, reason } = compareToBaseline(
+    metric,
+    value,
+    average,
+  );
 
-  return { metric, value, baseline: average, days, status, deviation, worse };
+  return {
+    metric,
+    value,
+    baseline: average,
+    days,
+    status,
+    deviation,
+    worse,
+    reason,
+    wristOvernight: today.wristOvernight ?? null,
+  };
 }
 
-function createCard({
-  metric,
-  value,
-  baseline,
-  days,
-  status,
-  deviation,
-  worse,
-}) {
+function createCard(reading) {
+  const { metric, value, baseline, deviation, status } = reading;
+
   const card = document.createElement('article');
   card.className = `card card--${status}`;
 
-  // Only shown once there is a baseline to compare against — before that
-  // there is nothing honest to put here.
+  // Only shown once there is both a reading and a baseline to compare it
+  // against — before that there is nothing honest to put here.
   const comparison =
     baseline === null || !Number.isFinite(value)
       ? ''
@@ -67,7 +76,7 @@ function createCard({
       >
     </p>
     ${comparison}
-    <p class="card__status">${phraseFor(metric, status, { days, worse })}</p>
+    <p class="card__status">${phraseFor(metric, status, reading)}</p>
   `;
 
   return card;
@@ -89,14 +98,21 @@ function show(records, source) {
 
   const readings = METRICS.map((metric) => readMetric(history, metric));
   el('summary-verdict').textContent = summaryFor(readings);
-
-  const container = el('cards');
-  container.replaceChildren(...readings.map(createCard));
+  el('cards').replaceChildren(...readings.map(createCard));
 
   el('footer-source').textContent = source;
   el('import').hidden = true;
   el('summary').hidden = false;
   el('footer').hidden = false;
+}
+
+function showImport() {
+  el('summary').hidden = true;
+  el('footer').hidden = true;
+  el('cards').replaceChildren();
+  el('import').hidden = false;
+  el('import-status').hidden = true;
+  el('file-input').value = '';
 }
 
 async function loadFile(file) {
@@ -114,9 +130,13 @@ async function loadFile(file) {
     );
 
     const seconds = ((performance.now() - started) / 1000).toFixed(1);
+    const { saved } = stored.save(dailyHealthData);
+
     show(
       dailyHealthData,
-      `${recordsRead.toLocaleString()} records over ${dailyHealthData.length.toLocaleString()} days, read in ${seconds}s.`,
+      `${recordsRead.toLocaleString()} records over ${dailyHealthData.length.toLocaleString()} days, read in ${seconds}s.${
+        saved ? '' : ' Could not be saved for next time.'
+      }`,
     );
   } catch (error) {
     status.textContent = `Could not read that file: ${error.message}`;
@@ -131,3 +151,22 @@ el('file-input').addEventListener('change', (event) => {
 el('use-sample').addEventListener('click', () => {
   show(sampleData, 'Sample data, not yours.');
 });
+
+el('another-file').addEventListener('click', showImport);
+
+el('forget').addEventListener('click', () => {
+  stored.forget();
+  showImport();
+});
+
+const remembered = stored.load();
+if (remembered !== null) {
+  const when = new Date(remembered.importedAt).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'long',
+  });
+  show(
+    remembered.dailyHealthData,
+    `${remembered.dailyHealthData.length.toLocaleString()} days, imported ${when}.`,
+  );
+}

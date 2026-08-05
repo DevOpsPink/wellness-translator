@@ -74,9 +74,8 @@ bounds from both directions on all three metrics.
 
 ## Where the plan stands
 
-All five build-order steps are done, and the app runs on the user's real
-export. What is not done: the import is not remembered, so a gigabyte gets
-re-read on every visit.
+Every build-order step is done and the app runs on the user's real export,
+which is remembered in localStorage between visits.
 
 The user's own `export.xml` sits in `private-data/`, which `.gitignore`
 excludes along with `*.xml` and `export*.zip`. Keep it that way and never
