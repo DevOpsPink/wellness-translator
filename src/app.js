@@ -11,6 +11,7 @@ import {
 import { coverage, missingNights } from './lib/coverage.js';
 import { importAppleHealthExport } from './lib/health-import.js';
 import * as stored from './lib/stored-data.js';
+import { openHealthExport } from './lib/zip.js';
 import {
   METRICS,
   TREND_DAYS,
@@ -267,8 +268,15 @@ async function loadFile(file) {
 
   try {
     const started = performance.now();
+
+    // Health hands out a zip; the XML is what gets read. Taking either saves
+    // the step people give up at.
+    const zipped = /\.zip$/i.test(file.name);
+    if (zipped) status.textContent = 'Opening the archive…';
+    const source = zipped ? await openHealthExport(file) : file;
+
     const { dailyHealthData, recordsRead, units: found } =
-      await importAppleHealthExport(file, (fraction) => {
+      await importAppleHealthExport(source, (fraction) => {
         status.textContent = `Reading… ${Math.round(fraction * 100)}%`;
       });
 

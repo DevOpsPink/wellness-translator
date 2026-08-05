@@ -136,13 +136,26 @@ when there was not yet enough history to judge anything.
 
 ## Reading an Apple Health export
 
-On iPhone: Health → your picture, top right → Export All Health Data. Unzip
-what arrives and pick `export.xml` out of it.
+On iPhone: Health → your picture, top right → Export All Health Data. Pick the
+`export.zip` that arrives; the `export.xml` inside works too.
 
-The file is big — a few years of a watch writing every heartbeat runs past a
-gigabyte — so it is streamed rather than loaded: chunks in, lines out, and only
-the three record types we want are ever parsed. A 1.6 GB export takes a couple
-of seconds. It is read in the browser and never uploaded.
+Taking the zip directly needed about a hundred lines of `src/lib/zip.js`,
+because asking someone to unzip first and then find `export.xml` among the
+workout routes and electrocardiograms is a step people give up at. A zip is
+read from its back end: the last record points at a table of everything in the
+archive, each row of which points at where that file's bytes start. From there
+the browser's own `DecompressionStream` inflates it. No ZIP64, no encryption —
+Apple's export needs neither, and code that claims to handle them without
+being tested on them is worse than code that says it does not.
+
+The data is big — a few years of a watch writing every heartbeat runs past a
+gigabyte — so it is streamed rather than loaded: chunks in, lines out, one
+`indexOf` per line to reject the millions of records nothing here wants. A
+1.6 GB export is read in about two seconds. Going in through the zip is
+*faster* than reading the loose XML, because 90 MB off the disk plus native
+inflate beats 1.6 GB off the disk.
+
+It is read in the browser and never uploaded.
 
 Four decisions were forced by what real exports actually contain:
 
@@ -264,6 +277,7 @@ a web font would mean a network request, and this app makes none.
 index.html                     the single screen
 src/app.js                     pulls it together, renders the cards
 src/styles.css                 all colours, including the traffic light
+src/lib/zip.js                 reaches export.xml inside export.zip
 src/lib/health-import.js       streams export.xml into daily records
 src/lib/coverage.js            how complete the record is
 src/lib/stored-data.js         keeps the import in localStorage
@@ -289,6 +303,7 @@ Small pieces, one working before the next starts:
 11. **Read runs of days, and this week against this season** ✅ done
 12. **A screen for how complete the record actually is** ✅ done
 13. **Sample data long enough to show the app working** ✅ done
+14. **Take the zip directly, without unzipping first** ✅ done
 
 Everything in the original spec now works on real data.
 
