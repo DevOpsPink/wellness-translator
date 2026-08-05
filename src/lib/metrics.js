@@ -51,6 +51,7 @@ export const METRICS = [
     format: (value) => Math.round(value).toString(),
     phrases: {
       [STATUS.GOOD]: 'Your heart is ticking over at its usual rate.',
+      better: 'Your heart is resting easier than it usually does.',
       [STATUS.WATCH]:
         'Your heart is working a little harder at rest than it usually does.',
       [STATUS.ALERT]:
@@ -66,6 +67,7 @@ export const METRICS = [
     format: (value) => Math.round(value).toString(),
     phrases: {
       [STATUS.GOOD]: 'Your recovery signal is where it usually sits.',
+      better: 'Your recovery signal is stronger than it usually is.',
       [STATUS.WATCH]: 'Your recovery signal is a little below your usual.',
       [STATUS.ALERT]: 'Your recovery signal is well below your usual.',
     },
@@ -79,6 +81,7 @@ export const METRICS = [
     format: (value) => value.toFixed(1),
     phrases: {
       [STATUS.GOOD]: 'You slept about as long as you usually do.',
+      better: 'You slept longer than you usually do.',
       [STATUS.WATCH]: 'You slept a little less than you usually do.',
       [STATUS.ALERT]: 'You slept a lot less than you usually do.',
     },
@@ -108,7 +111,7 @@ export const THRESHOLDS = {
  */
 export function compareToBaseline(metric, value, baseline) {
   if (!Number.isFinite(value) || !Number.isFinite(baseline) || baseline === 0) {
-    return { status: STATUS.COLLECTING, deviation: null };
+    return { status: STATUS.COLLECTING, deviation: null, worse: null };
   }
 
   const deviation = (value - baseline) / baseline;
@@ -136,7 +139,7 @@ export function compareToBaseline(metric, value, baseline) {
     status = STATUS.ALERT;
   }
 
-  return { status, deviation };
+  return { status, deviation, worse };
 }
 
 /**
@@ -144,10 +147,20 @@ export function compareToBaseline(metric, value, baseline) {
  *
  * While the baseline is still being built there is nothing to translate, so
  * the card says what it is waiting for instead of guessing.
+ *
+ * Green covers two different days: one that matches your usual, and one that
+ * beats it. Both are "nothing to flag", which is why they share a colour —
+ * but "you slept about as long as you usually do" is simply false on a night
+ * you slept an hour and a half longer, so the wording splits where the colour
+ * does not. The dividing line is the same 5% that separates green from
+ * yellow, read in the other direction.
  */
-export function phraseFor(metric, status, { days = 0 } = {}) {
+export function phraseFor(metric, status, { days = 0, worse = null } = {}) {
   if (status === STATUS.COLLECTING) {
     return `Collecting data — ${days} of ${MIN_DAYS_FOR_BASELINE} days`;
+  }
+  if (status === STATUS.GOOD && worse !== null && worse < -THRESHOLDS.WATCH) {
+    return metric.phrases.better;
   }
   return metric.phrases[status];
 }

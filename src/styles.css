@@ -155,6 +155,62 @@ body {
   color: var(--collecting);
 }
 
+/* --- Import ------------------------------------------------------------ */
+
+.import__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.import__lead {
+  margin: 0 0 1.5rem;
+  color: var(--text-muted);
+}
+
+.import__button {
+  display: inline-block;
+  padding: 0.75rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.import__button:hover {
+  border-color: var(--text-muted);
+}
+
+/* The label is the button: clicking anywhere on it opens the file chooser,
+   so the input itself never needs to be seen. */
+.import__button input {
+  display: none;
+}
+
+.import__hint,
+.import__sample,
+.import__status {
+  margin: 1rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.import__status {
+  font-variant-numeric: tabular-nums;
+}
+
+.link {
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* --- Footer ------------------------------------------------------------ */
 
 .footer {

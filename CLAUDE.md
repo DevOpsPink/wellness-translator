@@ -74,13 +74,21 @@ bounds from both directions on all three metrics.
 
 ## Where the plan stands
 
-Steps 1–4 are done: structure and cards, baseline and thresholds, per-metric
-phrasing, the summary line. Step 5 — reading a real Apple Health export
-instead of the mock — has not been started.
+All five build-order steps are done, and the app runs on the user's real
+export. What is not done: the import is not remembered, so a gigabyte gets
+re-read on every visit.
 
-The export is an `export.zip` containing a large XML file. `.gitignore`
-already excludes `*.xml`, `export*.zip` and `private-data/`; keep it that way,
-and never commit real health data.
+The user's own `export.xml` sits in `private-data/`, which `.gitignore`
+excludes along with `*.xml` and `export*.zip`. Keep it that way and never
+commit real health data. That file is useful for testing — a `File`-like
+`{ size, stream() }` built from a `fetch` response drives the importer without
+a file dialog.
+
+Real data broke two things that the mock could not have caught, which is worth
+remembering before trusting a change that only passes on `mock-health-data.js`:
+sleep totals were nonsense until overlapping segments from different devices
+were merged, and the green phrasing claimed "about as long as you usually do"
+on a night far longer than usual.
 
 One open question the user has not decided: the interface is in English while
 the user writes in Russian. Do not switch it unasked.

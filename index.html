@@ -8,16 +8,44 @@
   </head>
   <body>
     <main class="app">
-      <header class="summary">
+      <header class="summary" id="summary" hidden>
         <p class="summary__date" id="summary-date"></p>
-        <!-- Step 6 fills this in from the three card statuses. -->
-        <h1 class="summary__verdict" id="summary-verdict">Here is your day</h1>
+        <h1 class="summary__verdict" id="summary-verdict"></h1>
       </header>
 
       <section class="cards" id="cards" aria-label="Today's metrics"></section>
 
-      <footer class="footer">
-        Everything stays in this browser. Nothing is uploaded anywhere.
+      <section class="import" id="import">
+        <h1 class="import__title">Wellness Translator</h1>
+        <p class="import__lead">
+          Three numbers from Apple Health, compared against your own last week
+          rather than anybody else's average.
+        </p>
+
+        <label class="import__button">
+          <input type="file" accept=".xml,text/xml" id="file-input" />
+          Choose your export.xml
+        </label>
+
+        <p class="import__hint">
+          In Health on iPhone: your picture, top right → Export All Health
+          Data. Unzip what arrives and pick <code>export.xml</code> out of it.
+          The file is often more than a gigabyte; it is read here in the
+          browser and never uploaded.
+        </p>
+
+        <p class="import__sample">
+          <button type="button" class="link" id="use-sample">
+            Or look at sample data
+          </button>
+        </p>
+
+        <p class="import__status" id="import-status" role="status" hidden></p>
+      </section>
+
+      <footer class="footer" id="footer" hidden>
+        <span id="footer-source"></span> Everything stays in this browser.
+        Nothing is uploaded anywhere.
       </footer>
     </main>
 
