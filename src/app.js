@@ -1,13 +1,50 @@
 /**
- * Entry point: read today's numbers, build three cards, put them on the page.
+ * Entry point: work out where today sits against your baseline, then put
+ * three cards on the page.
  */
-import { getLatestDay } from './data/mock-health-data.js';
-import { METRICS, STATUS_LABEL, getStatus } from './lib/metrics.js';
+import { dailyHealthData } from './data/mock-health-data.js';
+import { rollingBaseline } from './lib/baseline.js';
+import {
+  METRICS,
+  STATUS,
+  compareToBaseline,
+  formatDeviation,
+  statusText,
+} from './lib/metrics.js';
 
-/** Build one card element for a metric. */
-function createCard(metric, value, status) {
+/**
+ * Dev aid: `?days=3` pretends only the first three days were ever recorded.
+ * It is how you look at the "collecting data" state without editing the mock.
+ */
+function historyToShow(records) {
+  const requested = Number(new URLSearchParams(location.search).get('days'));
+  return Number.isInteger(requested) && requested > 0
+    ? records.slice(0, requested)
+    : records;
+}
+
+/** Everything one card needs to know, worked out in one place. */
+function readMetric(records, metric) {
+  const today = records[records.length - 1];
+  const value = today[metric.id];
+  const { average, days } = rollingBaseline(records, metric.id);
+  const { status, deviation } = compareToBaseline(metric, value, average);
+
+  return { metric, value, baseline: average, days, status, deviation };
+}
+
+function createCard({ metric, value, baseline, days, status, deviation }) {
   const card = document.createElement('article');
   card.className = `card card--${status}`;
+
+  // Only shown once there is a baseline to compare against — before that
+  // there is nothing honest to put here.
+  const comparison =
+    baseline === null
+      ? ''
+      : `<p class="card__baseline">Usually ${metric.format(baseline)} ${
+          metric.unit
+        } · ${formatDeviation(deviation)}</p>`;
 
   card.innerHTML = `
     <span class="card__dot" aria-hidden="true"></span>
@@ -15,14 +52,16 @@ function createCard(metric, value, status) {
     <p class="card__value">
       ${metric.format(value)}<span class="card__unit">${metric.unit}</span>
     </p>
-    <p class="card__status">${STATUS_LABEL[status]}</p>
+    ${comparison}
+    <p class="card__status">${statusText(status, { days })}</p>
   `;
 
   return card;
 }
 
 function render() {
-  const today = getLatestDay();
+  const records = historyToShow(dailyHealthData);
+  const today = records[records.length - 1];
 
   // The date the numbers describe — not "now". They are not the same thing
   // once we are reading a file that was exported days ago.
@@ -34,9 +73,18 @@ function render() {
     month: 'long',
   });
 
+  const readings = METRICS.map((metric) => readMetric(records, metric));
+
   const container = document.getElementById('cards');
-  for (const metric of METRICS) {
-    container.append(createCard(metric, today[metric.id], getStatus(metric.id)));
+  for (const reading of readings) {
+    container.append(createCard(reading));
+  }
+
+  // Step 4 turns the three statuses into one sentence for the day. Until
+  // then, at least stop promising a verdict the app cannot give yet.
+  if (readings.every((reading) => reading.status === STATUS.COLLECTING)) {
+    document.getElementById('summary-verdict').textContent =
+      'Still learning your normal';
   }
 }
 

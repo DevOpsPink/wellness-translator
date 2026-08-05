@@ -25,6 +25,15 @@ Traffic light, per metric:
 
 One screen: a summary line for the day on top, three cards below.
 
+How the baseline is worked out:
+
+- the mean of up to 7 days of history
+- **today is excluded from its own baseline** — otherwise an unusual day drags
+  the "normal" it is measured against toward itself, and partly excuses itself
+- days with no reading are skipped, not counted as zero
+- fewer than 4 readings and no verdict is given at all — with one or two
+  nights the average is just the last night restated
+
 ## Principles
 
 - No cloud storage — everything stays in the browser
@@ -42,13 +51,18 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000>.
 
+Add `?days=3` to the URL to pretend only the first three days were ever
+recorded — that is how to look at the "collecting data" state without editing
+the mock.
+
 ## Layout
 
 ```
 index.html                     the single screen
-src/app.js                     reads today's data, renders the cards
+src/app.js                     pulls it together, renders the cards
 src/styles.css                 all colours, including the traffic light
-src/lib/metrics.js             metric definitions + status rules
+src/lib/baseline.js            the 7-day rolling average
+src/lib/metrics.js             metric definitions, thresholds, wording
 src/data/mock-health-data.js   10 days of stand-in Apple Health data
 ```
 
@@ -57,14 +71,14 @@ src/data/mock-health-data.js   10 days of stand-in Apple Health data
 Small pieces, one working before the next starts:
 
 1. **Project structure and three cards with mock data** ✅ done
-2. Baseline: 7-day rolling average, plus the "collecting data" state
-3. Real colour logic driven by the ±5% / 10% thresholds
-4. Plain-language phrasing per metric
-5. The summary line for the day
-6. Import a real Apple Health export instead of the mock
+2. **Baseline, thresholds and the "collecting data" state** ✅ done
+3. Plain-language phrasing per metric
+4. The summary line for the day
+5. Import a real Apple Health export instead of the mock
 
-Step 1 hard-codes one status per metric in `getStatus()` so all three colours
-are visible while the layout is built. Step 2 replaces that function body.
+Steps 2 and 3 of the original plan landed together: a rolling average that
+nothing compares against is dead code, so the baseline and the thresholds that
+read it arrived in one piece.
 
 ## Status
 
