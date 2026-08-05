@@ -120,7 +120,7 @@ commit real health data. That file is useful for testing — a `File`-like
 a file dialog.
 
 Real data broke two things that the mock could not have caught, which is worth
-remembering before trusting a change that only passes on `mock-health-data.js`:
+remembering before trusting a change that only passes on `sample-data.js`:
 sleep totals were nonsense until overlapping segments from different devices
 were merged, and the green phrasing claimed "about as long as you usually do"
 on a night far longer than usual.

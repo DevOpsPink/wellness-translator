@@ -2,7 +2,7 @@
  * Entry point: get some daily data from somewhere, work out where the chosen
  * day sits against its baseline, then put three cards on the page.
  */
-import { dailyHealthData as sampleData } from './data/mock-health-data.js';
+import { sampleHealthData } from './data/sample-data.js';
 import {
   driftSeries,
   rollingBaseline,
@@ -293,7 +293,11 @@ el('file-input').addEventListener('change', (event) => {
 });
 
 el('use-sample').addEventListener('click', () => {
-  show(sampleData, 'Sample data, not yours.');
+  const sample = sampleHealthData();
+  show(
+    sample,
+    `Sample data — invented, not yours. ${sample.length} made-up days.`,
+  );
 });
 
 el('show-data').addEventListener('click', () => {

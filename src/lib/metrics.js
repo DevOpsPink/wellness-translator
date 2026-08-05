@@ -275,12 +275,15 @@ export function phraseFor(
   if (status === STATUS.COLLECTING) {
     return `Collecting data — ${days} of ${MIN_DAYS_FOR_BASELINE} days`;
   }
-  // Measured in the same typical days as the warning thresholds, so "better
-  // than usual" is as hard to trigger as "worse than usual".
+  // Deliberately a lower bar than the warning. The two are not symmetrical in
+  // what they cost: "you slept longer than you usually do" is a statement of
+  // direction and is harmless if it is only a mild one, while a warning that
+  // fires too easily is the bug this whole scheme exists to fix. At the same
+  // bar as a warning, a night far longer than usual — nearly twice an
+  // ordinary night's swing — was still being described as "about as long as
+  // you usually do", directly under a printed +27%.
   const better =
-    worse !== null &&
-    ordinary !== null &&
-    worse < -(ordinary * THRESHOLDS.WATCH);
+    worse !== null && ordinary !== null && worse < -ordinary;
   if (status === STATUS.GOOD && better) {
     return metric.phrases.better;
   }

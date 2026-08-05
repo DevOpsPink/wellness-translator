@@ -121,6 +121,15 @@ python3 -m http.server 8000
 Then open <http://localhost:8000> and either pick an `export.xml` or click
 through to the sample data.
 
+The sample is 400 invented days, generated from a fixed seed so it is the same
+every time, and ending on today so it never goes stale. It is long enough for
+everything to engage — seven days for a baseline, thirty for the strip, ninety
+for the variability, ninety more behind that for the week-against-season
+comparison — and each metric is tuned to wander by as much as it really does,
+so the calibration has something real to calibrate against. It has gaps in it
+too, including a fortnight with the watch off, because the states built to
+handle missing data would otherwise never be seen.
+
 Arrow keys, or the chevrons beside the date, walk back through the history.
 Every state the app can be in is reachable that way, including the early days
 when there was not yet enough history to judge anything.
@@ -260,7 +269,7 @@ src/lib/coverage.js            how complete the record is
 src/lib/stored-data.js         keeps the import in localStorage
 src/lib/baseline.js            the 7-day rolling average
 src/lib/metrics.js             metric definitions, thresholds, wording
-src/data/mock-health-data.js   10 days of stand-in data, for the sample view
+src/data/sample-data.js        400 invented days, for the sample view
 ```
 
 ## Build order
@@ -279,6 +288,7 @@ Small pieces, one working before the next starts:
 10. **Calibrate the thresholds to each metric's own variability** ✅ done
 11. **Read runs of days, and this week against this season** ✅ done
 12. **A screen for how complete the record actually is** ✅ done
+13. **Sample data long enough to show the app working** ✅ done
 
 Everything in the original spec now works on real data.
 
