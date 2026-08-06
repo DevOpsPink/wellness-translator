@@ -457,20 +457,24 @@ export function summaryFor(readings) {
     // covers the lot, which is why it alone needs the qualifier.
     return stillCollecting.length === 0
       ? 'Everything is where it usually is'
-      : `Nothing unusual so far — still learning your ${joinList(stillCollecting)}`;
+      : // The labels carry their own "your", so this must not add another.
+        `Nothing unusual so far — still learning ${joinList(stillCollecting)}`;
   }
 
+  // Naming every one of six is a paragraph, not a summary — past three the
+  // count says more than the list does, and the cards below hold the detail.
+  const clause = (labels, verdict) => {
+    if (labels.length === readings.length) return `everything is ${verdict}`;
+    const subject =
+      labels.length <= 3
+        ? joinList(labels)
+        : `${labels.length} of the ${readings.length}`;
+    return `${subject} ${labels.length === 1 ? 'is' : 'are'} ${verdict}`;
+  };
+
   const clauses = [];
-  if (alert.length > 0) {
-    clauses.push(
-      `${joinList(alert)} ${alert.length === 1 ? 'is' : 'are'} well off your usual`,
-    );
-  }
-  if (watch.length > 0) {
-    clauses.push(
-      `${joinList(watch)} ${watch.length === 1 ? 'is' : 'are'} a little off`,
-    );
-  }
+  if (alert.length > 0) clauses.push(clause(alert, 'well off your usual'));
+  if (watch.length > 0) clauses.push(clause(watch, 'a little off'));
 
   let sentence = capitalise(clauses.join(', and '));
 
