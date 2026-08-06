@@ -39,6 +39,8 @@ let units = {};
 let ordinary = {};
 /** This week against the last three months, per metric, per day. */
 let drift = {};
+/** Which way of saying it: 'plain' or 'playful'. */
+let voice = 'plain';
 
 const unitFor = (metric) => units[metric.id] ?? metric.unit;
 
@@ -124,7 +126,10 @@ function createCard(reading) {
       >
     </p>
     ${comparison}
-    <p class="card__status">${phraseFor(metric, status, reading)}</p>
+    <p class="card__status">${phraseFor(metric, status, {
+      ...reading,
+      voice,
+    })}</p>
     <div class="trend" aria-hidden="true">${recent
       .map((day) => `<span class="trend__day trend__day--${day}"></span>`)
       .join('')}</div>
@@ -149,7 +154,7 @@ function render() {
   });
 
   const readings = METRICS.map((metric) => readMetric(days, selected, metric));
-  el('summary-verdict').textContent = summaryFor(readings);
+  el('summary-verdict').textContent = summaryFor(readings, voice);
   el('cards').replaceChildren(...readings.map(createCard));
 
   el('day-back').disabled = selected === 0;
@@ -309,6 +314,23 @@ el('use-sample').addEventListener('click', () => {
 });
 
 const NUMBERS_KEY = 'wellness-translator:show-numbers';
+const VOICE_KEY = 'wellness-translator:voice';
+
+function setVoice(name) {
+  voice = name === 'playful' ? 'playful' : 'plain';
+  el('show-voice').textContent =
+    voice === 'playful' ? 'Say it plainly' : 'Lighten up';
+  try {
+    localStorage.setItem(VOICE_KEY, voice);
+  } catch {
+    // Not remembering a preference is not worth interrupting anyone for.
+  }
+  if (days.length > 0) render();
+}
+
+el('show-voice').addEventListener('click', () => {
+  setVoice(voice === 'playful' ? 'plain' : 'playful');
+});
 
 function setNumbers(on) {
   el('app').dataset.numbers = on ? 'on' : 'off';
@@ -360,6 +382,7 @@ document.addEventListener('keydown', (event) => {
 });
 
 setNumbers(localStorage.getItem(NUMBERS_KEY) === 'on');
+setVoice(localStorage.getItem(VOICE_KEY) ?? 'plain');
 
 const remembered = stored.load();
 if (remembered !== null) {

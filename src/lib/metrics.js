@@ -27,9 +27,17 @@ export const STATUS = {
  * going up is bad; HRV and sleep going down is bad. The comparison logic
  * reads this instead of hard-coding a rule per metric.
  *
- * `phrases` is the translation the whole app exists for: 59 bpm means nothing
+ * `voices` is the translation the whole app exists for: 59 bpm means nothing
  * to most people, "your heart is working a little harder at rest than usual"
- * means something. Three rules hold for every line written here:
+ * means something.
+ *
+ * Two ways of saying it. `plain` is flat and careful. `playful` has a pulse —
+ * dry rather than loud, and never at the reader's expense. Note that the red
+ * lines stay warm in both: the app can see a number move and cannot see why,
+ * and behind a bad week there may be flu, a sick child or a funeral. A joke
+ * lands on all of them equally, which is the problem.
+ *
+ * Three rules hold for every line in either voice:
  *
  *   1. Describe, never diagnose or prescribe. "Your recovery signal is well
  *      below your usual" — yes. "You are coming down with something", "take
@@ -52,13 +60,22 @@ export const METRICS = [
     unit: 'bpm',
     worseWhen: 'higher',
     format: (value) => Math.round(value).toString(),
-    phrases: {
-      [STATUS.GOOD]: 'Your heart is ticking over at its usual rate.',
-      better: 'Your heart is resting easier than it usually does.',
-      [STATUS.WATCH]:
-        'Your heart is working a little harder at rest than it usually does.',
-      [STATUS.ALERT]:
-        'Your heart is working noticeably harder at rest than it usually does.',
+    voices: {
+      plain: {
+        [STATUS.GOOD]: 'Your heart is ticking over at its usual rate.',
+        better: 'Your heart is resting easier than it usually does.',
+        [STATUS.WATCH]:
+          'Your heart is working a little harder at rest than it usually does.',
+        [STATUS.ALERT]:
+          'Your heart is working noticeably harder at rest than it usually does.',
+      },
+      playful: {
+        [STATUS.GOOD]: 'Heart’s just ticking along.',
+        better: 'Your heart is barely bothering today.',
+        [STATUS.WATCH]: 'Your heart is putting in a bit of overtime.',
+        [STATUS.ALERT]:
+          'Your heart is working properly hard for someone sitting still.',
+      },
     },
   },
   {
@@ -71,11 +88,20 @@ export const METRICS = [
     unit: 'ms',
     worseWhen: 'lower',
     format: (value) => Math.round(value).toString(),
-    phrases: {
-      [STATUS.GOOD]: 'Your body looks about as rested as it usually does.',
-      better: 'Your body looks more rested than it usually does.',
-      [STATUS.WATCH]: 'Your body looks a little less rested than usual.',
-      [STATUS.ALERT]: 'Your body looks a lot less rested than usual.',
+    voices: {
+      plain: {
+        [STATUS.GOOD]: 'Your body looks about as rested as it usually does.',
+        better: 'Your body looks more rested than it usually does.',
+        [STATUS.WATCH]: 'Your body looks a little less rested than usual.',
+        [STATUS.ALERT]: 'Your body looks a lot less rested than usual.',
+      },
+      playful: {
+        [STATUS.GOOD]: 'Your body seems fine with things.',
+        better: 'Your body is in unusually good shape today.',
+        [STATUS.WATCH]: 'Your body is a bit less bouncy than usual.',
+        [STATUS.ALERT]:
+          'Your body is running on fumes, by its own standards.',
+      },
     },
   },
   {
@@ -85,21 +111,36 @@ export const METRICS = [
     unit: 'h',
     worseWhen: 'lower',
     format: (value) => value.toFixed(1),
-    phrases: {
-      [STATUS.GOOD]: 'You slept about as long as you usually do.',
-      better: 'You slept longer than you usually do.',
-      [STATUS.WATCH]: 'You slept a little less than you usually do.',
-      [STATUS.ALERT]: 'You slept a lot less than you usually do.',
+    voices: {
+      plain: {
+        [STATUS.GOOD]: 'You slept about as long as you usually do.',
+        better: 'You slept longer than you usually do.',
+        [STATUS.WATCH]: 'You slept a little less than you usually do.',
+        [STATUS.ALERT]: 'You slept a lot less than you usually do.',
+      },
+      playful: {
+        [STATUS.GOOD]: 'A normal night.',
+        better: 'You got a proper lie-in.',
+        [STATUS.WATCH]: 'You short-changed yourself a bit last night.',
+        [STATUS.ALERT]: 'That was not much of a night.',
+      },
     },
     // A blank night has three quite different explanations, and which one it
     // is decides what, if anything, the person should do about it.
-    explainMissing: (wristOvernight) =>
+    explainMissing: (wristOvernight, voice) =>
       ({
-        off: 'No sleep recorded — the watch was not on your wrist.',
-        partly:
-          'No sleep recorded — the watch was only on for part of the night.',
-        worn: 'The watch was on all night but recorded no sleep.',
-      })[wristOvernight] ?? 'No sleep recorded.',
+        plain: {
+          off: 'No sleep recorded — the watch was not on your wrist.',
+          partly:
+            'No sleep recorded — the watch was only on for part of the night.',
+          worn: 'The watch was on all night but recorded no sleep.',
+        },
+        playful: {
+          off: 'The watch spent the night on the side.',
+          partly: 'The watch gave up partway through the night.',
+          worn: 'The watch was on all night and noticed nothing.',
+        },
+      })[voice]?.[wristOvernight] ?? 'No sleep recorded.',
   },
   {
     id: 'walkingHeartRate',
@@ -111,13 +152,21 @@ export const METRICS = [
     // Resting heart rate says what the body costs while still. This says what
     // the same walk costs today, which moves earlier and for different
     // reasons.
-    phrases: {
-      [STATUS.GOOD]: 'Walking cost your heart what it usually does.',
-      better: 'Walking cost your heart less than it usually does.',
-      [STATUS.WATCH]:
-        'Your heart worked a little harder than usual while walking.',
-      [STATUS.ALERT]:
-        'Your heart worked noticeably harder than usual while walking.',
+    voices: {
+      plain: {
+        [STATUS.GOOD]: 'Walking cost your heart what it usually does.',
+        better: 'Walking cost your heart less than it usually does.',
+        [STATUS.WATCH]:
+          'Your heart worked a little harder than usual while walking.',
+        [STATUS.ALERT]:
+          'Your heart worked noticeably harder than usual while walking.',
+      },
+      playful: {
+        [STATUS.GOOD]: 'Walking felt normal to your heart.',
+        better: 'Walking was easy work today.',
+        [STATUS.WATCH]: 'Walking took a bit more out of you than usual.',
+        [STATUS.ALERT]: 'Walking took real effort today.',
+      },
     },
   },
   {
@@ -127,11 +176,19 @@ export const METRICS = [
     unit: 'km/h',
     worseWhen: 'lower',
     format: (value) => value.toFixed(1),
-    phrases: {
-      [STATUS.GOOD]: 'You walked at your usual pace.',
-      better: 'You walked faster than you usually do.',
-      [STATUS.WATCH]: 'You walked a little slower than you usually do.',
-      [STATUS.ALERT]: 'You walked noticeably slower than you usually do.',
+    voices: {
+      plain: {
+        [STATUS.GOOD]: 'You walked at your usual pace.',
+        better: 'You walked faster than you usually do.',
+        [STATUS.WATCH]: 'You walked a little slower than you usually do.',
+        [STATUS.ALERT]: 'You walked noticeably slower than you usually do.',
+      },
+      playful: {
+        [STATUS.GOOD]: 'Same walking speed as ever.',
+        better: 'You clearly had somewhere to be.',
+        [STATUS.WATCH]: 'You dawdled a little.',
+        [STATUS.ALERT]: 'You were properly slow today.',
+      },
     },
   },
   {
@@ -141,11 +198,19 @@ export const METRICS = [
     unit: 'min',
     worseWhen: 'lower',
     format: (value) => Math.round(value).toString(),
-    phrases: {
-      [STATUS.GOOD]: 'You were out in daylight about as long as usual.',
-      better: 'You were out in daylight longer than you usually are.',
-      [STATUS.WATCH]: 'You saw a little less daylight than you usually do.',
-      [STATUS.ALERT]: 'You saw much less daylight than you usually do.',
+    voices: {
+      plain: {
+        [STATUS.GOOD]: 'You were out in daylight about as long as usual.',
+        better: 'You were out in daylight longer than you usually are.',
+        [STATUS.WATCH]: 'You saw a little less daylight than you usually do.',
+        [STATUS.ALERT]: 'You saw much less daylight than you usually do.',
+      },
+      playful: {
+        [STATUS.GOOD]: 'The usual amount of daylight.',
+        better: 'You got out properly today.',
+        [STATUS.WATCH]: 'A bit of a cave day.',
+        [STATUS.ALERT]: 'You barely saw the sun.',
+      },
     },
     // No explanation offered on purpose. Sleep can name its cause because the
     // overnight heart rate says whether the watch was on; nothing here
@@ -271,12 +336,15 @@ export function phraseFor(
     ordinary = null,
     reason = null,
     wristOvernight = null,
+    voice = 'plain',
   } = {},
 ) {
+  const said = metric.voices[voice] ?? metric.voices.plain;
+
   if (reason === 'no-reading') {
     return metric.explainMissing === undefined
       ? 'Nothing recorded for this day.'
-      : metric.explainMissing(wristOvernight);
+      : metric.explainMissing(wristOvernight, voice);
   }
   if (status === STATUS.COLLECTING) {
     return `Collecting data — ${days} of ${MIN_DAYS_FOR_BASELINE} days`;
@@ -291,9 +359,9 @@ export function phraseFor(
   const better =
     worse !== null && ordinary !== null && worse < -ordinary;
   if (status === STATUS.GOOD && better) {
-    return metric.phrases.better;
+    return said.better;
   }
-  return metric.phrases[status];
+  return said[status];
 }
 
 /** How many days the strip of daily verdicts covers. */
@@ -434,9 +502,31 @@ function capitalise(sentence) {
  * @param readings the per-metric objects built in app.js, each carrying its
  *   `metric` and its `status`
  */
-export function summaryFor(readings) {
+/** The same sentence, in either voice. Structure fixed, wording swapped. */
+const SUMMARY_VOICES = {
+  plain: {
+    nothingYet: 'Still learning your normal',
+    allUsual: 'Everything is where it usually is',
+    partlyUsual: 'Nothing unusual so far — still learning ',
+    alert: 'well off your usual',
+    watch: 'a little off',
+    tail: ' — the rest looks typical',
+  },
+  playful: {
+    nothingYet: 'Still working out what normal looks like for you',
+    allUsual: 'Nothing to report today',
+    partlyUsual: 'So far so good — still getting to know ',
+    alert: 'properly off',
+    watch: 'a bit off',
+    tail: ' — the rest is behaving',
+  },
+};
+
+export function summaryFor(readings, voice = 'plain') {
+  const said = SUMMARY_VOICES[voice] ?? SUMMARY_VOICES.plain;
+
   const graded = readings.filter(({ status }) => status !== STATUS.COLLECTING);
-  if (graded.length === 0) return 'Still learning your normal';
+  if (graded.length === 0) return said.nothingYet;
 
   const labelsWith = (wanted) =>
     graded
@@ -456,9 +546,9 @@ export function summaryFor(readings) {
     // metrics they are about and so claim nothing about the others; this one
     // covers the lot, which is why it alone needs the qualifier.
     return stillCollecting.length === 0
-      ? 'Everything is where it usually is'
+      ? said.allUsual
       : // The labels carry their own "your", so this must not add another.
-        `Nothing unusual so far — still learning ${joinList(stillCollecting)}`;
+        `${said.partlyUsual}${joinList(stillCollecting)}`;
   }
 
   // Naming every one of six is a paragraph, not a summary — past three the
@@ -473,8 +563,8 @@ export function summaryFor(readings) {
   };
 
   const clauses = [];
-  if (alert.length > 0) clauses.push(clause(alert, 'well off your usual'));
-  if (watch.length > 0) clauses.push(clause(watch, 'a little off'));
+  if (alert.length > 0) clauses.push(clause(alert, said.alert));
+  if (watch.length > 0) clauses.push(clause(watch, said.watch));
 
   let sentence = capitalise(clauses.join(', and '));
 
@@ -484,7 +574,7 @@ export function summaryFor(readings) {
     graded.length === readings.length &&
     graded.length > alert.length + watch.length;
   if (everythingElseIsGood) {
-    sentence += ' — the rest looks typical';
+    sentence += said.tail;
   }
 
   return sentence;
