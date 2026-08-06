@@ -43,9 +43,12 @@ export const STATUS = {
 export const METRICS = [
   {
     id: 'restingHeartRate',
-    label: 'Resting Heart Rate',
+    // Named the way a person would say it, not the way HealthKit does.
+    // "Resting Heart Rate" is a field name; "Heart at rest" is a thing that
+    // happens to you.
+    label: 'Heart at rest',
     // Lower case, because it only ever appears inside the summary sentence.
-    shortLabel: 'resting heart rate',
+    shortLabel: 'your heart at rest',
     unit: 'bpm',
     worseWhen: 'higher',
     format: (value) => Math.round(value).toString(),
@@ -60,22 +63,25 @@ export const METRICS = [
   },
   {
     id: 'hrv',
-    label: 'HRV',
-    shortLabel: 'HRV',
+    // "HRV" is three letters that mean nothing to most people, and "recovery
+    // signal" was not much better — it named an instrument rather than a
+    // state. What the number is actually about is how rested the body seems.
+    label: 'How rested you seem',
+    shortLabel: 'how rested you seem',
     unit: 'ms',
     worseWhen: 'lower',
     format: (value) => Math.round(value).toString(),
     phrases: {
-      [STATUS.GOOD]: 'Your recovery signal is where it usually sits.',
-      better: 'Your recovery signal is stronger than it usually is.',
-      [STATUS.WATCH]: 'Your recovery signal is a little below your usual.',
-      [STATUS.ALERT]: 'Your recovery signal is well below your usual.',
+      [STATUS.GOOD]: 'Your body looks about as rested as it usually does.',
+      better: 'Your body looks more rested than it usually does.',
+      [STATUS.WATCH]: 'Your body looks a little less rested than usual.',
+      [STATUS.ALERT]: 'Your body looks a lot less rested than usual.',
     },
   },
   {
     id: 'sleepHours',
     label: 'Sleep',
-    shortLabel: 'sleep',
+    shortLabel: 'your sleep',
     unit: 'h',
     worseWhen: 'lower',
     format: (value) => value.toFixed(1),
@@ -97,8 +103,8 @@ export const METRICS = [
   },
   {
     id: 'walkingHeartRate',
-    label: 'Walking Heart Rate',
-    shortLabel: 'walking heart rate',
+    label: 'Heart when walking',
+    shortLabel: 'your heart when walking',
     unit: 'bpm',
     worseWhen: 'higher',
     format: (value) => Math.round(value).toString(),
@@ -116,8 +122,8 @@ export const METRICS = [
   },
   {
     id: 'walkingSpeed',
-    label: 'Walking Speed',
-    shortLabel: 'walking speed',
+    label: 'Walking pace',
+    shortLabel: 'your walking pace',
     unit: 'km/h',
     worseWhen: 'lower',
     format: (value) => value.toFixed(1),
@@ -130,8 +136,8 @@ export const METRICS = [
   },
   {
     id: 'daylightMinutes',
-    label: 'Time in Daylight',
-    shortLabel: 'time in daylight',
+    label: 'Time outside',
+    shortLabel: 'your time outside',
     unit: 'min',
     worseWhen: 'lower',
     format: (value) => Math.round(value).toString(),

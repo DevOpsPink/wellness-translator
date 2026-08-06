@@ -7,7 +7,9 @@
     <link rel="stylesheet" href="src/styles.css" />
   </head>
   <body>
-    <main class="app">
+    <!-- Plain by default. The figures are there for anyone who wants them,
+         behind one click, because the point of the app is the sentence. -->
+    <main class="app" id="app" data-numbers="off">
       <header class="summary" id="summary" hidden>
         <div class="summary__nav">
           <button
@@ -82,6 +84,10 @@
       <footer class="footer" id="footer" hidden>
         <p id="footer-source"></p>
         <p>
+          <button type="button" class="link" id="show-numbers">
+            Show the numbers
+          </button>
+          ·
           <button type="button" class="link" id="show-data">
             What was recorded
           </button>

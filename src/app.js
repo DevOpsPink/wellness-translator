@@ -308,6 +308,22 @@ el('use-sample').addEventListener('click', () => {
   );
 });
 
+const NUMBERS_KEY = 'wellness-translator:show-numbers';
+
+function setNumbers(on) {
+  el('app').dataset.numbers = on ? 'on' : 'off';
+  el('show-numbers').textContent = on ? 'Hide the numbers' : 'Show the numbers';
+  try {
+    localStorage.setItem(NUMBERS_KEY, on ? 'on' : 'off');
+  } catch {
+    // A refusal to remember a preference is not worth interrupting anyone for.
+  }
+}
+
+el('show-numbers').addEventListener('click', () => {
+  setNumbers(el('app').dataset.numbers !== 'on');
+});
+
 el('show-data').addEventListener('click', () => {
   const showing = el('data').hidden;
   if (showing) renderData();
@@ -342,6 +358,8 @@ document.addEventListener('keydown', (event) => {
   }
   event.preventDefault();
 });
+
+setNumbers(localStorage.getItem(NUMBERS_KEY) === 'on');
 
 const remembered = stored.load();
 if (remembered !== null) {

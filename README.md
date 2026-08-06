@@ -74,11 +74,22 @@ large for *that* metric, measured against how far a week normally drifts from
 its season. An ordinary week sits 2.6% from the season for walking heart rate
 and 16% for daylight.
 
-One screen: a summary line for the day on top, six cards below. A single
-reading says almost nothing on its own, so each card also carries the last 30
-days as one mark per day, coloured the way that day's card would have been,
-and a sentence counting them: *off your usual on 14 of the last 30 recorded
-days*.
+One screen: a line for the day on top, six cards below. A card is a name, a
+colour and a sentence — nothing else, unless you ask.
+
+The figures arrived one at a time, each defensible on its own: the reading,
+the baseline, the percentage, thirty days of marks, two lines of statistics.
+Together they buried the thing the app is for. Someone looking at *40 ms ·
+−10%* has no way of knowing whether that is bad news, and the sentence beside
+it — the actual product — had been reduced to a caption. So the numbers moved
+behind **Show the numbers**, and the page opens plain.
+
+The names went plain too. "HRV" is three letters that mean nothing; it is now
+"How rested you seem", which is what the number is about.
+
+With the numbers switched on, each card also carries the last 30 days as one
+mark per day, coloured the way that day's card would have been, and a sentence
+counting them: *off your usual on 14 of the last 30 recorded days*.
 
 That started life as a line chart and was thrown away. The chart scaled itself
 to whatever range the days happened to cover, so a heart rate wandering between
