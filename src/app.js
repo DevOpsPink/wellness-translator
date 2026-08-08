@@ -9,6 +9,7 @@ import {
   typicalDeviations,
 } from './lib/baseline.js';
 import { coverage, missingNights } from './lib/coverage.js';
+import { donut } from './lib/donut.js';
 import { importAppleHealthExport } from './lib/health-import.js';
 import * as stored from './lib/stored-data.js';
 import { openHealthExport } from './lib/zip.js';
@@ -155,6 +156,7 @@ function render() {
 
   const readings = METRICS.map((metric) => readMetric(days, selected, metric));
   el('summary-verdict').textContent = summaryFor(readings, voice);
+  el('summary-ring').innerHTML = donut(readings.map(({ status }) => status));
   el('cards').replaceChildren(...readings.map(createCard));
 
   el('day-back').disabled = selected === 0;

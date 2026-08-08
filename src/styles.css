@@ -103,8 +103,48 @@ body {
 
 /* --- Summary line ------------------------------------------------------ */
 
+/* The ring first, then the words. On a phone the ring drops above them
+   rather than squeezing the sentence into a column. */
 .summary {
+  display: flex;
+  align-items: center;
+  gap: 1.125rem;
   margin-bottom: 1.75rem;
+}
+
+.summary__words {
+  min-width: 0;
+}
+
+.summary__ring {
+  flex: none;
+  line-height: 0;
+}
+
+.ring__part {
+  fill: none;
+  stroke: var(--collecting);
+  stroke-width: 9;
+  /* Square-cut, so the gaps between segments survive. See donut.js. */
+  stroke-linecap: butt;
+}
+
+.ring__part--good {
+  stroke: var(--good);
+}
+.ring__part--watch {
+  stroke: var(--watch);
+}
+.ring__part--alert {
+  stroke: var(--alert);
+}
+
+@media (max-width: 30rem) {
+  .summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.875rem;
+  }
 }
 
 .summary__nav {

@@ -74,8 +74,14 @@ large for *that* metric, measured against how far a week normally drifts from
 its season. An ordinary week sits 2.6% from the season for walking heart rate
 and 16% for daylight.
 
-One screen: a line for the day on top, six cards below. A card is a name, a
-colour and a sentence — nothing else, unless you ask.
+One screen: a ring and a line for the day on top, six cards below. A card is a
+name, a colour and a sentence — nothing else, unless you ask.
+
+The ring is one segment per card, same size, same order, same colours. Six
+sentences is reading; the ring is glancing, and it answers the first question —
+how is today — before any of them are read. Equal segments rather than
+proportions on purpose: they can be counted, and each one is a card you can go
+and read.
 
 The figures arrived one at a time, each defensible on its own: the reading,
 the baseline, the percentage, thirty days of marks, two lines of statistics.

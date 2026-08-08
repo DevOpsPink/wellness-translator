@@ -11,29 +11,32 @@
          behind one click, because the point of the app is the sentence. -->
     <main class="app" id="app" data-numbers="off">
       <header class="summary" id="summary" hidden>
-        <div class="summary__nav">
-          <button
-            type="button"
-            class="daybtn"
-            id="day-back"
-            aria-label="Previous day"
-          >
-            ‹
-          </button>
-          <p class="summary__date" id="summary-date"></p>
-          <button
-            type="button"
-            class="daybtn"
-            id="day-forward"
-            aria-label="Next day"
-          >
-            ›
-          </button>
-          <button type="button" class="link" id="day-latest" hidden>
-            Latest
-          </button>
+        <div class="summary__ring" id="summary-ring"></div>
+        <div class="summary__words">
+          <div class="summary__nav">
+            <button
+              type="button"
+              class="daybtn"
+              id="day-back"
+              aria-label="Previous day"
+            >
+              ‹
+            </button>
+            <p class="summary__date" id="summary-date"></p>
+            <button
+              type="button"
+              class="daybtn"
+              id="day-forward"
+              aria-label="Next day"
+            >
+              ›
+            </button>
+            <button type="button" class="link" id="day-latest" hidden>
+              Latest
+            </button>
+          </div>
+          <h1 class="summary__verdict" id="summary-verdict"></h1>
         </div>
-        <h1 class="summary__verdict" id="summary-verdict"></h1>
       </header>
 
       <section class="cards" id="cards" aria-label="Today's metrics"></section>
@@ -41,7 +44,7 @@
       <section class="import" id="import">
         <h1 class="import__title">Wellness Translator</h1>
         <p class="import__lead">
-          Three numbers from Apple Health, compared against your own last week
+          Six numbers from Apple Health, compared against your own last week
           rather than anybody else's average.
         </p>
 
