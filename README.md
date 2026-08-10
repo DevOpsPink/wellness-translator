@@ -151,6 +151,27 @@ Arrow keys, or the chevrons beside the date, walk back through the history.
 Every state the app can be in is reachable that way, including the early days
 when there was not yet enough history to judge anything.
 
+## Tests
+
+```bash
+npm test
+```
+
+Node's own runner, no dependencies, no framework — `package.json` exists to
+say these files are ES modules and nothing else. Seventy-five tests over the
+logic, which is all pure functions: the baseline and the two timescales, the
+thresholds, every phrase in both voices, the summary line across all 4,096
+combinations of six card states, the importer's rules about sleep and
+midnight, and the zip reader against an archive the test builds byte by byte.
+
+Most of them are there because something was once wrong. The floating-point
+boundary, the confident lie about the watch, the dot on the wrong day, the
+sentence that read as a contradiction — each has a test named after what it
+got wrong, so it cannot come back quietly.
+
+The interface is not tested. It is checked by driving the page in a browser,
+which is honest about what that is worth.
+
 ## Reading an Apple Health export
 
 On iPhone: Health → your picture, top right → Export All Health Data. Pick the

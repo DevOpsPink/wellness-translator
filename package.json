@@ -1,0 +1,9 @@
+{
+  "name": "wellness-translator",
+  "private": true,
+  "type": "module",
+  "description": "Reads Apple Health data and translates deviations from your own normal into plain language.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

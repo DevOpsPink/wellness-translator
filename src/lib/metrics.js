@@ -415,7 +415,14 @@ export function trendSentence(statuses) {
   ).length;
 
   if (off === 0) {
-    return `In your usual range on all of the last ${judged.length} recorded days.`;
+    // Phrased as "nothing was flagged", not "every day was the same". The
+    // difference showed up on a card reading "You slept longer than you
+    // usually do" directly above "In your usual range on all of the last 15
+    // recorded days" — two true statements that read as a contradiction,
+    // because one was about today's direction and the other about how many
+    // days were worth flagging. A sentence has to be right about what a
+    // reader will take it to mean, not only about what it counts.
+    return `Nothing off your usual in the last ${judged.length} recorded days.`;
   }
 
   // A run is worth more than a tally, so it leads. The coloured marks above

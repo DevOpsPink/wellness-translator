@@ -40,9 +40,11 @@ raise it rather than quietly working around it.
 
 ## Conventions already established
 
-- **No dependencies and no build step.** Plain HTML, CSS and ES modules. Node
-  is not installed on this machine. Do not introduce npm, a bundler or a
-  framework without asking — "it would be easier with X" is not a reason here.
+- **No dependencies and no build step.** Plain HTML, CSS and ES modules, served
+  as they are. `package.json` has no dependencies and exists only to mark the
+  files as ES modules and to name the test command. Do not introduce a
+  bundler, a framework or a runtime dependency without asking — "it would be
+  easier with X" is not a reason here.
 - **Statuses are named by meaning, not colour**: `good`, `watch`, `alert`,
   `collecting`. Colour lives only in `styles.css`.
 - **The palette is devops.pink's, derived from one hue in OKLCH.** `--hue: 340`
@@ -84,9 +86,18 @@ raise it rather than quietly working around it.
 
 ## Verifying changes
 
-There is no test runner (no Node). Verify by driving the page: serve the
-folder, then exercise the logic in the browser console and check the render at
-desktop and 375px, in both light and dark.
+```bash
+npm test
+```
+
+Node's own runner over `test/`, no dependencies. The logic is all pure
+functions and is covered; add to the suite rather than checking things in the
+browser console and throwing the result away. When fixing a bug, name the test
+after what went wrong — most of the existing ones are named that way, and that
+is what stops the same mistake returning.
+
+The interface is not covered. For anything visual, serve the folder and drive
+the page: check the render at desktop and 375px, in both light and dark.
 
 Two traps worth knowing. Toggling a view with the `hidden` attribute only
 works because of the `[hidden] { display: none !important }` rule near the top
