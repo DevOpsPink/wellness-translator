@@ -3,9 +3,9 @@
  *
  * Every other app in this space quietly shows whatever it has. This one says
  * out loud how much of the record is missing and, where there is evidence for
- * it, why — because a metric recorded on a handful of nights in ninety is not a health
- * finding, it is a watch left on the bedside table, and the two need telling
- * apart before anything else on screen means much.
+ * it, why — because a metric recorded on a handful of nights in ninety is not
+ * a health finding, it is a watch left on the bedside table, and the two need
+ * telling apart before anything else on screen means much.
  *
  * Numbers only. The sentences built from them live in metrics.js.
  */

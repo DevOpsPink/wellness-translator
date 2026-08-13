@@ -52,9 +52,9 @@ export function rollingBaseline(records, metricId, index = records.length - 1) {
  * How many recorded days the "a typical day for you" figure is measured over.
  *
  * Counted in days that have a reading rather than days on the calendar. Sleep
- * can go missing for weeks at a time, and a calendar window would keep
- * finding too few to work with and fall back to a guess — on the metric whose
- * spread is furthest from that guess.
+ * can go missing for weeks at a time, and a calendar window then keeps finding
+ * too few readings to work with and falls back to a guess — on the metric
+ * whose spread is furthest from that guess.
  */
 export const VARIABILITY_SAMPLES = 90;
 

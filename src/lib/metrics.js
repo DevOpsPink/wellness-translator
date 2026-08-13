@@ -223,10 +223,10 @@ export const METRICS = [
  * How far from baseline is far enough to say something — counted in typical
  * days for that metric, not in fixed percentages.
  *
- * The original spec said 5% and 10%. Measured against years of real
- * data those turned out to fit resting heart rate almost exactly and to be
- * meaningless for everything noisier: daylight was flagged on half of all days and
- * sleep on nearly half. A warning that never stops is not a warning.
+ * The original spec said 5% and 10%. Measured against years of real data those
+ * turned out to fit resting heart rate almost exactly and to be meaningless
+ * for anything noisier: half of all daylight days raised a warning. An alarm
+ * that sounds every other day is not an alarm.
  *
  * Two and three times an ordinary day put roughly one day in seven at yellow
  * and one in twenty at red, whatever the metric — so the colour finally means

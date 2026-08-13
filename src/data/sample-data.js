@@ -38,10 +38,10 @@ function seededRandom(seed) {
  * `spread` is not the figure the app ends up measuring. Noise here passes
  * through a bell curve narrower than one, and the baseline it is compared
  * against is itself an average of seven noisy days, so what comes out the far
- * end is roughly half what goes in. These numbers were tuned by generating
- * the data and measuring it until the app saw what it sees on a real export:
- * a resting heart rate wandering a few percent on an ordinary day and a
- * daylight figure wandering ten times as far.
+ * end is roughly half what goes in. These numbers were tuned by generating the
+ * data and measuring it until the app saw the same wander it sees on a real
+ * export — a steady heart rate against a daylight figure that swings ten times
+ * as far.
  */
 const SHAPES = {
   restingHeartRate: { centre: 58, spread: 0.059, drift: 0.02 },

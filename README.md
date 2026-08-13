@@ -1,183 +1,164 @@
 # Wellness Translator
 
-Reads Apple Health data and translates deviations from *your own* normal into
-plain language, using a traffic-light system. No cloud, no accounts, no
-engagement mechanics — the page tells you how your day looks and then gets out
-of the way.
+**What it is.** A web page that reads your Apple Health export and says, in
+plain English, whether today is unusual *for you* — not against a population
+norm, against your own last week.
+
+**Who it is for.** Anyone with an Apple Watch who wants to know what their own
+numbers mean. It runs entirely in the browser: no account, no server, nothing
+uploaded.
+
+**How to run it.** No build, no dependencies. Serve the folder and open it:
+
+```bash
+python3 -m http.server 8000
+```
+
+Then <http://localhost:8000/?sample> for the demo, or pick your own
+`export.zip` on the front page.
 
 ![Six cards, each a name, a colour and a sentence, under a ring summarising the day](docs/screenshot.png)
 
-*The sample view, on invented data. Taken from the running app with
-`?sample` — no real figures in it.*
+*The sample view, on invented data.*
+
+---
+
+Everything below is the reasoning. The short version: I was given a
+specification, I built it exactly, and then measuring it against years of real data showed that the rule at the heart of it was wrong. Fixing that is the
+most interesting thing in this repository.
+
+> **A note on the numbers in this document.** Every figure quoted below comes
+> from the generated sample data, not from anyone's real health record. The
+> findings were made on a real export; the numbers used to illustrate them are
+> invented, because a README is public forever.
 
 ## The idea
 
-Six metrics, compared against your personal 7-day rolling average rather than
-against a population norm:
+Six metrics, compared against your personal 7-day rolling average:
 
 | Metric             | Bad direction | What it adds                          |
 | ------------------ | ------------- | ------------------------------------- |
-| Resting Heart Rate | higher        | what the body costs while still       |
-| HRV                | lower         | how much slack the nervous system has |
+| Heart at rest      | higher        | what the body costs while still       |
+| How rested you seem| lower         | how much slack the nervous system has |
 | Sleep              | shorter       | the night behind the day              |
-| Walking Heart Rate | higher        | what the same walk costs today        |
-| Walking Speed      | lower         | fatigue you have not noticed yet      |
-| Time in Daylight   | lower         | how much of the day happened outside  |
+| Heart when walking | higher        | what the same walk costs today        |
+| Walking pace       | lower         | fatigue you have not noticed yet      |
+| Time outside       | lower         | how much of the day happened outside  |
 
-The first three were the original spec. The last three were picked from what a
-real export turned out to contain: each is recorded on most of any
-ninety days, and none of them is a step count.
+The first three came from the specification. I chose the other three from what
+a real export turned out to contain — each is recorded on most of
+any ninety days, and none of them is a step count.
 
-Traffic light, per metric, counted in **typical days for that metric** rather
-than in fixed percentages:
+## The rule in the spec was wrong
+
+The specification said: green within ±5% of your baseline, yellow at 5–10%
+worse, red beyond that. One rule, all metrics. It reads like a considered
+decision, and I implemented it precisely.
+
+Then I measured how far each metric actually moves on an ordinary day, and the
+rule fell apart. Resting heart rate drifts about 3% from its baseline on a
+normal day, so a 5% line catches something real. Time outside drifts about 32%,
+because some days you are out for twenty minutes and some for four hours — a 5%
+line there is not a threshold, it is a rounding error.
+
+Measured across the sample, here is what the fixed rule did against what
+counting in *typical days for that metric* does instead:
+
+| Metric              | An ordinary day moves it | Flagged under 5% / 10% | Flagged now |
+| ------------------- | ------------------------ | ---------------------- | ----------- |
+| Heart when walking  | 2.7%                     | 8%                     | 11%         |
+| Walking pace        | 2.9%                     | 15%                    | 8%          |
+| Heart at rest       | 3.1%                     | 11%                    | 8%          |
+| How rested you seem | 13.2%                    | 39%                    | 8%          |
+| Sleep               | 15.0%                    | 46%                    | 10%         |
+| Time outside        | 32.0%                    | 49%                    | 9%          |
+
+Half of all daylight days raised a warning. An alarm that sounds every other
+day is not an alarm — you stop looking at it, including on the day it is right.
+
+So each metric is now measured against its own ordinary day: the median
+distance from baseline over its last 90 *recorded* days.
 
 - 🟢 **Green** — no further off than twice an ordinary day
 - 🟡 **Yellow** — two to three times an ordinary day
 - 🔴 **Red** — more than three times
 - ⚪️ **Collecting data** — too little history to judge, so nothing is claimed
 
-The spec originally said 5% and 10%. Measured against years of real data
-those fit resting heart rate almost exactly — an ordinary day moves it 3.1% —
-and were meaningless for everything noisier. Daylight swings 32% on an ordinary
-day, because some days you are out for twenty minutes and some for four hours,
-so a 5% line raised a warning on half of all days. Sleep, 46%. An alarm that never
-stops is not an alarm.
+That levels every card to roughly 90% green, so a colour means the same thing
+wherever it appears. I used the median rather than the mean so that a fortnight
+of illness does not raise the bar for noticing the next one. The spec's 5%
+survives as the fallback for a metric with too little history to know its own
+spread — the one job it is actually suited to.
 
-Each metric is now measured against its own ordinary day, taken as the median
-distance from baseline over its last 90 *recorded* days. That levels the cards
-out at roughly 90% green, 6% yellow, 4% red apiece, so a colour finally means
-the same thing wherever it appears:
+**Recorded days, not calendar days.** Sleep goes missing for weeks at a time. A
+ninety-day window kept finding too few readings and falling back to the guess,
+on the metric whose spread was furthest from the guess.
 
-| Metric             | An ordinary day moves it | Was flagged | Now |
-| ------------------ | ------------------------ | ----------- | --- |
-| Walking Heart Rate | 2.7%                     | 8%          | 11% |
-| Resting Heart Rate | 3.1%                     | 11%         | 8%  |
-| Walking Speed      | 2.9%                     | 15%         | 8%  |
-| HRV                | 13.2%                    | 39%         | 8%  |
-| Sleep              | 15.0%                    | 46%         | 10% |
-| Time in Daylight   | 32.0%                    | 49%         | 9%  |
+### One timescale cannot see everything
 
-The median is used rather than the mean so that a fortnight of illness does not
-raise the bar for noticing the next one. The 5% figure survives as the fallback
-for a metric with too little history to know its own spread.
+I then tried to detect runs — several off days in a row, which for a noisy
+metric means more than any single day does. It almost never fired, and the
+reason turned out to be more useful than the feature.
 
-### Two timescales, because one cannot see everything
+The baseline is a seven-day average. A metric that drops and stays down is back
+inside its own normal within about four days: the baseline chases the change
+and swallows it. **The daily verdict cannot see a sustained shift, by
+construction.** No amount of work on it would have helped.
 
-The daily verdict is blind to a slow slide, and not by oversight. The baseline
-is a seven-day average, so a metric that drops and stays down is back inside
-its own normal within about four days — it chases the change and swallows it.
-Measured over this export, runs of three consecutive off days happen **seven
-times across years of real data** and never once reach four.
+So there is a second, slower comparison on each card: this week's average
+against the last three months'. It answers a different question — not "is today
+unusual" but "has your usual moved" — and it finds what the daily view
+structurally cannot. In the sample, daylight runs as much as 95% above its
+season and sleep 22% below, on days the daily card calls unremarkable.
 
-So the card carries a second, slower comparison: this week's average against
-the last three months'. It answers a different question — not "is today
-unusual" but "has your usual moved" — and it finds what the daily view cannot.
-Sleep has run 22% below its season; HRV, 26% below.
+## What the screen shows
 
-The same rule applies as everywhere else: the gap is only mentioned when it is
-large for *that* metric, measured against how far a week normally drifts from
-its season. An ordinary week sits 2.6% from the season for walking heart rate
-and 16% for daylight.
+A ring and a line for the day on top, six cards below. A card is a name, a
+colour and a sentence — nothing else, unless you ask.
 
-One screen: a ring and a line for the day on top, six cards below. A card is a
-name, a colour and a sentence — nothing else, unless you ask.
+The ring is one segment per card: same size, same order, same colours. Six
+sentences is reading; the ring is glancing. Equal segments rather than
+proportions on purpose, so they can be counted.
 
-The ring is one segment per card, same size, same order, same colours. Six
-sentences is reading; the ring is glancing, and it answers the first question —
-how is today — before any of them are read. Equal segments rather than
-proportions on purpose: they can be counted, and each one is a card you can go
-and read.
+**I took the numbers off the card.** They arrived one at a time, each
+defensible on its own — the reading, the baseline, the percentage, thirty days
+of marks, two lines of statistics — and together they buried the thing the app
+is for. Someone looking at *40 ms · −10%* has no way of knowing whether that is
+bad news, and the sentence beside it, which is the actual product, had shrunk to
+a caption. They are all still there behind **Show the numbers**. The page opens
+plain.
 
-The figures arrived one at a time, each defensible on its own: the reading,
-the baseline, the percentage, thirty days of marks, two lines of statistics.
-Together they buried the thing the app is for. Someone looking at *40 ms ·
-−10%* has no way of knowing whether that is bad news, and the sentence beside
-it — the actual product — had been reduced to a caption. So the numbers moved
-behind **Show the numbers**, and the page opens plain.
+**I renamed the metrics.** "HRV" is three letters that mean nothing to most
+people, and "recovery signal" only swapped them for an instrument. The card now
+says "How rested you seem", which is what the number is about.
 
-The names went plain too. "HRV" is three letters that mean nothing; it is now
-"How rested you seem", which is what the number is about.
+**I threw away the chart.** Each card used to carry a sparkline. It scaled
+itself to whatever range its thirty days happened to cover, so a heart rate
+wandering between 68 and 72 drew exactly the same dramatic peaks as one swinging
+from 50 to 90 — the most eye-catching thing about the picture carried no
+information at all. It was also the wrong instrument for an app whose premise is
+turning numbers into words: it handed back a shape to decode. In its place, one
+mark per day coloured the way that day's card would have been, and a sentence
+counting them. Marks can be counted; a slope has to be interpreted.
 
-With the numbers switched on, each card also carries the last 30 days as one
-mark per day, coloured the way that day's card would have been, and a sentence
-counting them: *off your usual on 14 of the last 30 recorded days*.
-
-That started life as a line chart and was thrown away. The chart scaled itself
-to whatever range the days happened to cover, so a heart rate wandering between
-68 and 72 drew the same dramatic peaks as one swinging from 50 to 90 — its most
-eye-catching feature carried no information. It was also the wrong instrument
-for an app whose whole premise is turning numbers into words: it handed back a
-shape to decode. Marks you can count cannot be misread, and the sentence
-answers what the shape was only gesturing at.
-
-Any day in the history can be brought up with the arrow keys.
-
-How the baseline is worked out:
-
-- the mean of up to 7 days of history
-- **today is excluded from its own baseline** — otherwise an unusual day drags
-  the "normal" it is measured against toward itself, and partly excuses itself
-- days with no reading are skipped, not counted as zero
-- fewer than 4 readings and no verdict is given at all — with one or two
-  nights the average is just the last night restated
+**There are two voices.** Plain is flat and careful; playful has a pulse — "A
+bit of a cave day" instead of "You saw a little less daylight than you usually
+do". Tone is a decision, so it is a switch rather than something I chose once
+and silently. The red lines stay warm in both: the app can see a number move and
+cannot see why, and behind a bad week there may be flu, a sick child or a
+funeral.
 
 ## Principles
 
-- No cloud storage — everything stays in the browser
-- All local
+- No cloud storage, no accounts, no network requests of any kind
 - No engagement mechanics, no streaks, no notifications
+- **No composite score.** Averaging six metrics into one number would invent a
+  precision none of them has and hide the only thing worth knowing — which one
+  moved.
 - **Describe, never diagnose or prescribe.** The app can see that a number
-  moved. It cannot see why, and it is not a doctor. Every phrase says what
-  changed against your own last week — none of them says what it means for
-  your health or what to do about it.
-
-## Running it
-
-The app is plain HTML, CSS and ES modules — no build step and no dependencies.
-Browsers refuse to load ES modules over `file://`, so serve the folder:
-
-```bash
-python3 -m http.server 8000
-```
-
-Then open <http://localhost:8000> and either pick an export or click through to
-the sample data. <http://localhost:8000/?sample> goes straight there, leaving
-any real import that is remembered untouched — it is the link to hand someone
-who just wants to see the thing, and how the screenshot above was taken.
-
-The sample is 400 invented days, generated from a fixed seed so it is the same
-every time, and ending on today so it never goes stale. It is long enough for
-everything to engage — seven days for a baseline, thirty for the strip, ninety
-for the variability, ninety more behind that for the week-against-season
-comparison — and each metric is tuned to wander by as much as it really does,
-so the calibration has something real to calibrate against. It has gaps in it
-too, including a fortnight with the watch off, because the states built to
-handle missing data would otherwise never be seen.
-
-Arrow keys, or the chevrons beside the date, walk back through the history.
-Every state the app can be in is reachable that way, including the early days
-when there was not yet enough history to judge anything.
-
-## Tests
-
-```bash
-npm test
-```
-
-Node's own runner, no dependencies, no framework — `package.json` exists to
-say these files are ES modules and nothing else. Seventy-five tests over the
-logic, which is all pure functions: the baseline and the two timescales, the
-thresholds, every phrase in both voices, the summary line across all 4,096
-combinations of six card states, the importer's rules about sleep and
-midnight, and the zip reader against an archive the test builds byte by byte.
-
-Most of them are there because something was once wrong. The floating-point
-boundary, the confident lie about the watch, the dot on the wrong day, the
-sentence that read as a contradiction — each has a test named after what it
-got wrong, so it cannot come back quietly.
-
-The interface is not tested. It is checked by driving the page in a browser,
-which is honest about what that is worth.
+  moved. It cannot see why, and it is not a doctor.
+- **Never state a cause without evidence for it.** Sleep can say the watch was
+  off, because the overnight heart rate proves it. Nothing else offers a reason.
 
 ## Reading an Apple Health export
 
@@ -186,82 +167,82 @@ On iPhone: Health → your picture, top right → Export All Health Data. Pick t
 
 Taking the zip directly needed about a hundred lines of `src/lib/zip.js`,
 because asking someone to unzip first and then find `export.xml` among the
-workout routes and electrocardiograms is a step people give up at. A zip is
-read from its back end: the last record points at a table of everything in the
+workout routes and electrocardiograms is a step people give up at. A zip is read
+from its back end: the last record points at a table of everything in the
 archive, each row of which points at where that file's bytes start. From there
 the browser's own `DecompressionStream` inflates it. No ZIP64, no encryption —
-Apple's export needs neither, and code that claims to handle them without
-being tested on them is worse than code that says it does not.
+Apple's export needs neither, and code that claims to handle what it has never
+been run against is worse than code that says plainly what it does not do.
 
-The data is big — a few years of a watch writing every heartbeat runs past a
-gigabyte — so it is streamed rather than loaded: chunks in, lines out, one
-`indexOf` per line to reject the millions of records nothing here wants. A
-1.6 GB export is read in about two seconds. Going in through the zip is
-*faster* than reading the loose XML, because 90 MB off the disk plus native
-inflate beats 1.6 GB off the disk.
+The data is big: a few years of a watch writing every heartbeat runs well past a
+gigabyte. It cannot be held in a string and it cannot go through DOMParser, so
+it is streamed — chunks in, lines out, one `indexOf` per line to reject the
+millions of records nothing here wants. A 1.6 GB export is read in about two
+seconds. Going in through the zip is *faster* than reading the loose XML,
+because 90 MB off the disk plus native inflate beats 1.6 GB off the disk.
 
 It is read in the browser and never uploaded.
 
-Four decisions were forced by what real exports actually contain:
+Seven decisions were forced by what real exports contain:
 
-- **Sleep segments are merged, not summed.** A watch and a phone will both
-  record the same night, and the watch alone splits it into dozens of stage
-  segments. Adding their durations up invents twenty-hour nights, so the
-  intervals are unioned first and measured after.
-- **Only `Asleep*` counts.** `InBed` is lying down, and it overlaps the asleep
-  segments it brackets; `Awake` is the opposite. Both the modern
-  `AsleepCore`/`Deep`/`REM` and the older `AsleepUnspecified` are sleep.
-- **A night belongs to the morning it ends on**, which is how a night lines up
-  with the day that follows it.
-- **A day holding less than an hour of sleep is treated as unrecorded.** Real
-  exports are full of days with six or eight minutes of "asleep" — a watch
-  picked up briefly. Taken at face value that reads as 98% below baseline and
-  lights up red: a false alarm manufactured out of missing data.
+- **Sleep segments are merged, not summed.** A watch and a phone both record the
+  same night, and the watch alone splits it into dozens of stage segments.
+  Adding their durations up invents twenty-hour nights.
+- **Only `Asleep*` counts.** `InBed` is lying down and overlaps the asleep
+  segments it brackets; `Awake` is the opposite.
+- **A night belongs to the morning it ends on**, so it lines up with the day
+  that follows it.
+- **Under an hour of sleep is treated as unrecorded.** Exports are full of days
+  holding six or eight minutes of "asleep" — a watch picked up briefly. At face
+  value that reads as 98% below baseline and lights up red: a false alarm
+  manufactured out of an absence.
+- **Some metrics are summed, others averaged.** Daylight arrives as five-minute
+  chunks. Averaging them would report five minutes a day.
+- **A reading belongs to the day its window mostly covers.** A resting heart
+  rate spans thirteen hours on average and about one in ten crosses midnight;
+  filing by start time puts a reading mostly taken on Tuesday under Monday.
+- **Units come from the file**, because the export uses whatever the phone is
+  set to and a walking speed can arrive as km/hr or mi/hr.
+
+Timestamps carry their own UTC offset, and both readings are kept: the absolute
+instant, for deciding whether two sleep segments overlap, and the wall clock
+date as written, which is the one a person means by "Tuesday" even if they were
+somewhere else that week.
 
 ### Was the watch even on?
 
-A night with no sleep recorded looks the same whether you slept badly or left
-the watch on the charger — the records are simply absent either way. But a
-watch on a wrist takes a heart rate reading every few minutes regardless of
-what it thinks of your sleep, so the ordinary heart rate stream answers the
-question the sleep records cannot.
+A night with no sleep recorded looks identical whether you slept badly or left
+the watch on the charger. But a watch on a wrist takes a heart rate reading
+every few minutes regardless of what it makes of your sleep, so the ordinary
+heart rate stream answers what the sleep records cannot.
 
-On a real export the separation is stark. Counting readings between midnight
-and six:
+The separation is stark. Counting readings between midnight and six, nights
+with sleep recorded have dozens; nights without have almost none. A blank night
+therefore gets one of three explanations: the watch was off, it was on for part
+of the night, or it was on all night and recorded nothing anyway — which is a
+settings problem rather than a habit, and the only one of the three a person can
+go and fix.
 
-| overnight readings | sleep recorded | no sleep |
-| ------------------ | -------------- | -------- |
-| 0                  | 0              | 96       |
-| 1–29               | 0              | 30       |
-| 30+                | 273            | 1        |
-
-So a blank night gets one of three explanations: the watch was off, it was on
-for only part of the night, or it was on all night and recorded no sleep
-anyway — which is a settings problem rather than a habit. If the export holds
-no heart rate at all, the answer is "unknown" rather than "off": absence of
-the signal is not the signal.
+If an export holds no heart rate at all, the answer is "unknown" rather than
+"off". Absence of the signal is not the signal — told otherwise, the app
+confidently claimed the watch had been off on every single night.
 
 The window is local clock time, which suits someone who sleeps at night and
 would misjudge someone who works nights.
 
 ### What was actually recorded
 
-A second screen, reachable from the footer, shows how complete the record is:
-days with a reading out of the last ninety, per metric, and how far each one
-goes back.
+A second screen shows how complete the record is: days with a reading out of
+the last ninety, per metric, and how far each goes back.
 
-It exists because the most useful thing this app found in a real export was
-not about health at all. Sleep is recorded on 55 of the last ninety nights.
-Of the 35 blank ones the watch was off for 25 and on for part of
-the night for 9 — and across the whole history, one night had the
-watch on all night and still recorded nothing, which is a settings problem
-rather than a habit. None of that is visible in Apple Health, or in any of the
-apps built on top of it, and all of it is actionable in a way a heart rate
-reading is not.
+I added it because the most useful thing this app found in a real export was
+not about health at all — it was that one metric had barely been recorded for
+months, and it could say why. None of that is visible in Apple Health, or in
+the apps built on top of it, and unlike a heart rate reading, every line of it
+can be acted on.
 
-Only sleep gets its blanks explained. The evidence is the overnight heart
-rate, which says whether the watch was on a wrist and says nothing whatever
-about a daytime figure.
+Only sleep gets its blanks explained, for the reason above: the overnight heart
+rate is evidence about the night and about nothing else.
 
 ### Remembering an import
 
@@ -269,52 +250,47 @@ The parsed days — one row each, a few hundred kilobytes — are kept in
 `localStorage`, so opening the page again does not mean re-reading a gigabyte.
 It never leaves the device, and **Forget this data** wipes it.
 
-Timestamps carry their own UTC offset. Both readings are kept — the absolute
-instant, for deciding whether two sleep segments overlap, and the wall clock
-date as written, which is the one a person means by "Tuesday" even if they
-were somewhere else that week.
-
-Three more things the export forced:
-
-- **Some metrics are summed, others averaged.** Daylight arrives as a stream of
-  five-minute chunks and has to be added up. Averaging them would report five
-  minutes a day; adding up a day's heart rates would be meaningless.
-- **A reading belongs to the day its window mostly falls in.** Not every record
-  is a moment — a resting heart rate covers thirteen hours on average, a
-  walking heart rate nearly ten, and about one in ten of each runs across
-  midnight. Filing those by the hour they began puts a reading mostly taken on
-  Tuesday under Monday.
-- **Units come from the file.** The export uses whatever the phone is set to,
-  so a walking speed can arrive as km/hr or mi/hr. Reading the unit off the
-  record keeps the label right on somebody else's export.
-
 The app opens on the most recent day that has most of its readings in, not the
 last row in the file. An export is made partway through a day, so its final
-entry holds whatever had synced by then — often a heart rate and nothing else.
-The forward arrow still reaches it.
+entry holds whatever had synced by then — often a heart rate and nothing else,
+which looks like a broken app rather than an early one.
+
+## Tests
+
+```bash
+npm test
+```
+
+Node's own runner, no dependencies, no framework — `package.json` exists to say
+these files are ES modules and nothing else. Seventy-five tests over the logic,
+which is all pure functions: the baseline and both timescales, the thresholds,
+every phrase in both voices, the summary line across all 4,096 combinations of
+six card states, the importer's rules about sleep and midnight, and the zip
+reader against an archive the test builds byte by byte rather than a fixture
+written with the same assumptions as the reader.
+
+Most are named after something that was once wrong, so it cannot come back
+quietly: the boundary floating point could not represent, the confident lie
+about the watch, the dot on the wrong day, the sentence that read as a
+contradiction.
+
+The interface is not tested. It is checked by driving the page in a browser,
+which is honest about what that is worth.
 
 ## Colour
 
-The palette is devops.pink's, taken the way that site builds it rather than by
-eyedropper: one hue — 340 — with everything else derived from it in OKLCH.
-`--hue` in `src/styles.css` is the single knob; move it and the whole interface
-follows, greys included, since they carry a trace of the brand rather than
-being neutral.
+The palette is [devops.pink](https://devops.pink)'s, taken the way that site
+builds it rather than by eyedropper: one hue — 340 — with everything else
+derived from it in OKLCH. `--hue` in `src/styles.css` is the single knob.
 
 The traffic light is the exception. A red that has drifted towards the pink
 beside it stops working as a warning, so the three statuses keep hues held well
 away from 340 and from each other. What makes them look like one family is the
 lightness they share — and that shared lightness is also what makes them
-legible, so the palette and the contrast floor are settled by the same
-decision. The fourth state has no colour of its own: a card with no verdict
-borrows the muted text colour, because it is not making a quiet judgement, it
-is making none.
+legible, so the palette and the contrast floor are settled by one decision.
 
-Every text pair was measured against its real background rather than eyeballed
-— all ten clear WCAG AA in both themes, the tightest being 4.69:1.
-
-Roboto is the site's face. It is used if the reader has it and skipped if not:
-a web font would mean a network request, and this app makes none.
+Every text pair was measured against its real background rather than eyeballed:
+all ten clear WCAG AA in both themes, the tightest at 4.69:1.
 
 ## Layout
 
@@ -324,47 +300,38 @@ src/app.js                     pulls it together, renders the cards
 src/styles.css                 all colours, including the traffic light
 src/lib/zip.js                 reaches export.xml inside export.zip
 src/lib/health-import.js       streams export.xml into daily records
-src/lib/coverage.js            how complete the record is
-src/lib/stored-data.js         keeps the import in localStorage
-src/lib/baseline.js            the 7-day rolling average
+src/lib/baseline.js            the rolling average and the two timescales
 src/lib/metrics.js             metric definitions, thresholds, wording
+src/lib/coverage.js            how complete the record is
+src/lib/donut.js               the ring above the cards
+src/lib/stored-data.js         keeps the import in localStorage
 src/data/sample-data.js        400 invented days, for the sample view
 ```
 
-## Build order
+All wording lives in `src/lib/metrics.js` — one file to open to reword the app
+or translate it.
 
-Small pieces, one working before the next starts:
+## The sample data
 
-1. **Project structure and three cards with mock data** ✅ done
-2. **Baseline, thresholds and the "collecting data" state** ✅ done
-3. **Plain-language phrasing per metric** ✅ done
-4. **The summary line for the day** ✅ done
-5. **Import a real Apple Health export instead of the mock** ✅ done
-6. **Remember the import, and explain blank nights** ✅ done
-7. **Show the month behind each number, and walk the history** ✅ done
-8. **Three more metrics, chosen from what the export actually holds** ✅ done
-9. **Replace the chart with something that needs no decoding** ✅ done
-10. **Calibrate the thresholds to each metric's own variability** ✅ done
-11. **Read runs of days, and this week against this season** ✅ done
-12. **A screen for how complete the record actually is** ✅ done
-13. **Sample data long enough to show the app working** ✅ done
-14. **Take the zip directly, without unzipping first** ✅ done
+400 invented days, from a fixed seed so the demo is the same every time, ending
+on today so it never goes stale. Long enough for everything to engage: seven
+days for a baseline, thirty for the strip of daily marks, ninety for the
+variability that sets the thresholds, ninety more behind that for the
+week-against-season comparison.
 
-Everything in the original spec now works on real data.
-
-The summary line is deliberately not a score. Averaging three metrics into one
-number would invent a precision none of them has and hide the only thing worth
-knowing — which one moved. It names the worst group and says whether it stands
-alone.
-
-All wording lives in the `phrases` field of each metric in `src/lib/metrics.js`
-— that is the one file to open to reword the app or translate it.
-
-Steps 2 and 3 of the original plan landed together: a rolling average that
-nothing compares against is dead code, so the baseline and the thresholds that
-read it arrived in one piece.
+Each metric is tuned so the app measures the same wander it measures on a real
+export, because thresholds derived from spread need a spread worth deriving
+from. It has gaps in it too, including a fortnight with the watch off, since the
+states built for missing data would otherwise never be seen.
 
 ## Status
 
-Early MVP, web-first. iOS is not in scope yet — the point for now is getting
-the translation logic right on exported data.
+Working, and finished as a piece of work. Not a product: Apple ships something
+similar for free, on the wrist, and this needs a file.
+
+What it does that they do not: it explains *why* data is missing, it covers
+daytime metrics and not only overnight ones, it refuses to reduce you to a
+score, and every number stays on your machine.
+
+iOS is not in scope. Live data would need a native client with HealthKit
+access, which a web page cannot have.

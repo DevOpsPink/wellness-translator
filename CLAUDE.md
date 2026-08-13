@@ -65,8 +65,9 @@ raise it rather than quietly working around it.
 - **Thresholds are relative to each metric's own spread, never fixed
   percentages.** This was the app's worst bug and it came straight from the
   spec: 5% is a rare event for a resting heart rate and an ordinary Tuesday
-  for time in daylight, so one fixed line raised a warning on half of all daylight days. If a
-  new threshold is ever needed, measure what an ordinary day looks like first.
+  for time in daylight, so one fixed line raised a warning on half of all
+  daylight days. If a new threshold is ever needed, measure what an ordinary
+  day looks like first.
 - **A rolling baseline cannot see a sustained shift**, and no amount of
   cleverness in the daily verdict will change that: the seven-day average
   chases the change and absorbs it within about four days. That is why there
@@ -117,24 +118,33 @@ judge. (This replaced an earlier `?days=N` URL parameter.)
 The threshold boundaries are the part that has already broken once: an exact
 5% deviation came out of floating-point division as 0.05000000000000002 and
 turned a green card yellow. When touching `compareToBaseline`, check both
-bounds from both directions on all three metrics.
+bounds from both directions on every metric.
+
+## Never put real health figures in a tracked file
+
+This repository is a portfolio piece. README, comments and commit messages are
+public forever and end up in search engines, so **every number quoted anywhere
+in git must come from `sample-data.js`, never from a real export.** Findings
+made on real data are fine to describe; the figures illustrating them are not.
+
+The sample exists partly for this: it is tuned to wander as much as a real
+export does, so it can carry the documentation as well as the demo. Recompute
+against it rather than reaching for the number you just measured.
+
+A real export lives in `private-data/`, which `.gitignore` excludes along with
+`*.xml` and `export*.zip`. Keep it that way. It is useful for testing — a
+`File`-like `{ size, stream() }` built from a `fetch` response drives the
+importer without a file dialog.
 
 ## Where the plan stands
 
-Every build-order step is done and the app runs on the user's real export,
-which is remembered in localStorage between visits.
+Every build-order step is done, plus the tests, the ring and the sample data.
 
-The user's own `export.xml` sits in `private-data/`, which `.gitignore`
-excludes along with `*.xml` and `export*.zip`. Keep it that way and never
-commit real health data. That file is useful for testing — a `File`-like
-`{ size, stream() }` built from a `fetch` response drives the importer without
-a file dialog.
-
-Real data broke two things that the mock could not have caught, which is worth
+Real data broke things the mock could not have caught, which is worth
 remembering before trusting a change that only passes on `sample-data.js`:
 sleep totals were nonsense until overlapping segments from different devices
 were merged, and the green phrasing claimed "about as long as you usually do"
 on a night far longer than usual.
 
-One open question the user has not decided: the interface is in English while
-the user writes in Russian. Do not switch it unasked.
+Two things the user has not decided: whether the repository goes public, and
+whether the interface stays in English. Do not change either unasked.
