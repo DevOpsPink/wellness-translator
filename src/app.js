@@ -307,13 +307,15 @@ el('file-input').addEventListener('change', (event) => {
   if (file) loadFile(file);
 });
 
-el('use-sample').addEventListener('click', () => {
+function showSample() {
   const sample = sampleHealthData();
   show(
     sample,
     `Sample data — invented, not yours. ${sample.length} made-up days.`,
   );
-});
+}
+
+el('use-sample').addEventListener('click', showSample);
 
 const NUMBERS_KEY = 'wellness-translator:show-numbers';
 const VOICE_KEY = 'wellness-translator:voice';
@@ -386,7 +388,13 @@ document.addEventListener('keydown', (event) => {
 setNumbers(localStorage.getItem(NUMBERS_KEY) === 'on');
 setVoice(localStorage.getItem(VOICE_KEY) ?? 'plain');
 
-const remembered = stored.load();
+// `?sample` opens straight on the invented data, without touching whatever
+// real import is remembered. It is how the demo gets linked to, and how the
+// screenshot in the README is taken without anyone's own figures in it.
+const remembered = new URLSearchParams(location.search).has('sample')
+  ? null
+  : stored.load();
+
 if (remembered !== null) {
   const when = new Date(remembered.importedAt).toLocaleDateString(undefined, {
     day: 'numeric',
@@ -397,4 +405,6 @@ if (remembered !== null) {
     `${remembered.dailyHealthData.length.toLocaleString()} days, imported ${when}.`,
     remembered.units,
   );
+} else if (new URLSearchParams(location.search).has('sample')) {
+  showSample();
 }

@@ -5,6 +5,11 @@ plain language, using a traffic-light system. No cloud, no accounts, no
 engagement mechanics — the page tells you how your day looks and then gets out
 of the way.
 
+![Six cards, each a name, a colour and a sentence, under a ring summarising the day](docs/screenshot.png)
+
+*The sample view, on invented data. Taken from the running app with
+`?sample` — no real figures in it.*
+
 ## The idea
 
 Six metrics, compared against your personal 7-day rolling average rather than
@@ -135,8 +140,10 @@ Browsers refuse to load ES modules over `file://`, so serve the folder:
 python3 -m http.server 8000
 ```
 
-Then open <http://localhost:8000> and either pick an `export.xml` or click
-through to the sample data.
+Then open <http://localhost:8000> and either pick an export or click through to
+the sample data. <http://localhost:8000/?sample> goes straight there, leaving
+any real import that is remembered untouched — it is the link to hand someone
+who just wants to see the thing, and how the screenshot above was taken.
 
 The sample is 400 invented days, generated from a fixed seed so it is the same
 every time, and ending on today so it never goes stale. It is long enough for
