@@ -24,8 +24,9 @@ Then <http://localhost:8000/?sample> for the demo, or pick your own
 ---
 
 Everything below is the reasoning. The short version: I was given a
-specification, I built it exactly, and then measuring it against years of real data showed that the rule at the heart of it was wrong. Fixing that is the
-most interesting thing in this repository.
+specification, I built it exactly, and then measuring it against years of real
+data showed that the rule at the heart of it was wrong. Fixing that is the most
+interesting thing in this repository.
 
 > **A note on the numbers in this document.** Every figure quoted below comes
 > from the generated sample data, not from anyone's real health record. The
@@ -46,8 +47,8 @@ Six metrics, compared against your personal 7-day rolling average:
 | Time outside       | lower         | how much of the day happened outside  |
 
 The first three came from the specification. I chose the other three from what
-a real export turned out to contain — each is recorded on most of
-any ninety days, and none of them is a step count.
+a real export turned out to contain — each is recorded on most days, and none
+of them is a step count.
 
 ## The rule in the spec was wrong
 
