@@ -1,5 +1,7 @@
 # Wellness Translator
 
+[![CI](https://github.com/DevOpsPink/wellness-translator/actions/workflows/ci.yml/badge.svg)](https://github.com/DevOpsPink/wellness-translator/actions/workflows/ci.yml)
+
 **What it is.** A web page that reads your Apple Health export and says, in
 plain English, whether today is unusual *for you* — not against a population
 norm, against your own last week.
@@ -277,6 +279,12 @@ contradiction.
 
 The interface is not tested. It is checked by driving the page in a browser,
 which is honest about what that is worth.
+
+CI runs the suite on two Node versions, and runs `scripts/audit-history.sh`
+over the full history on every push. That second job is the one that matters
+here: this app is built on the promise that health data stays on your machine,
+and the check makes sure the promise holds for its author too — no figure from
+a real export in any file, any old version of a file, or any commit message.
 
 ## Colour
 

@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Tests on Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22', '24']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      # No install step: the project has no dependencies, and package.json is
+      # there to mark the files as ES modules and name this command.
+      - run: npm test
+
+  audit:
+    name: No real health figures in the history
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The audit reads every blob ever committed and every commit
+          # message. The default shallow clone has neither.
+          fetch-depth: 0
+
+      - run: ./scripts/audit-history.sh

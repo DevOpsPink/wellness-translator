@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "description": "Reads Apple Health data and translates deviations from your own normal into plain language.",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "test": "node --test"
   }
