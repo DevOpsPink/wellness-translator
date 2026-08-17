@@ -1,0 +1,19 @@
+# There is nothing to build. The files are served exactly as they are, which
+# is the whole point of the thing: plain HTML, CSS and ES modules, no bundler,
+# no step between what is written here and what a browser runs.
+#
+# `publish` is pinned to this folder on purpose. A deploy that guesses its own
+# directory can guess the parent one, and everything alongside this project
+# would go up with it.
+[build]
+  publish = "."
+  command = ""
+
+# The app talks to nothing and loads nothing from anywhere else, so say so. A
+# page that makes no requests should not be permitted to make any.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
