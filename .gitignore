@@ -5,3 +5,6 @@ node_modules/
 /private-data/
 *.xml
 export*.zip
+
+# Local state written by the Netlify CLI — not part of the project.
+.netlify/
