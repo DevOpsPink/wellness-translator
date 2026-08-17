@@ -2,26 +2,33 @@
 
 [![CI](https://github.com/DevOpsPink/wellness-translator/actions/workflows/ci.yml/badge.svg)](https://github.com/DevOpsPink/wellness-translator/actions/workflows/ci.yml)
 
-**What it is.** A web page that reads your Apple Health export and says, in
-plain English, whether today is unusual *for you* — not against a population
-norm, against your own last week.
+### → **[wellness-translator.netlify.app](https://wellness-translator.netlify.app)**
 
-**Who it is for.** Anyone with an Apple Watch who wants to know what their own
-numbers mean. It runs entirely in the browser: no account, no server, nothing
-uploaded.
-
-**How to run it.** No build, no dependencies. Serve the folder and open it:
-
-```bash
-python3 -m http.server 8000
-```
-
-Then <http://localhost:8000/?sample> for the demo, or pick your own
-`export.zip` on the front page.
+A web page that reads your Apple Health export and tells you, in plain English,
+whether today is unusual *for you* — not against a population norm, against
+your own last week.
 
 ![Six cards, each a name, a colour and a sentence, under a ring summarising the day](docs/screenshot.png)
 
-*The sample view, on invented data.*
+*The sample view, on invented data —
+[open it](https://wellness-translator.netlify.app/?sample).*
+
+## Using it
+
+1. On your iPhone: **Health → your picture, top right → Export All Health
+   Data.** It takes a few minutes and produces an `export.zip`.
+2. Get that file onto a computer. AirDrop is easiest.
+3. Open **[the page](https://wellness-translator.netlify.app)** and pick the
+   zip. That is the whole thing.
+
+No account, no sign-up, no upload. The file is read inside your browser and
+never leaves your machine — the page makes no network requests at all, and the
+served headers forbid it from making any. Close the tab and nothing of yours
+went anywhere.
+
+No Apple Watch, or just want to see what it looks like?
+**[Open the demo](https://wellness-translator.netlify.app/?sample)** — 400
+invented days, nothing to download.
 
 ---
 
@@ -257,6 +264,23 @@ The app opens on the most recent day that has most of its readings in, not the
 last row in the file. An export is made partway through a day, so its final
 entry holds whatever had synced by then — often a heart rate and nothing else,
 which looks like a broken app rather than an early one.
+
+## Running it yourself
+
+Plain HTML, CSS and ES modules: no build step, no dependencies, nothing to
+install. Browsers refuse to load ES modules over `file://`, so serve the
+folder:
+
+```bash
+python3 -m http.server 8000
+```
+
+Then <http://localhost:8000> to pick an export, or
+<http://localhost:8000/?sample> to go straight to the invented data.
+
+Arrow keys, or the chevrons beside the date, walk back through the history.
+Every state the app can be in is reachable that way, including the early days
+when there was not yet enough history to judge anything.
 
 ## Tests
 
